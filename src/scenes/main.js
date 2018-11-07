@@ -1,4 +1,3 @@
-import BoardPlugin from "plugins/board-plugin";
 import Board from "plugins/board/board/Board";
 import BoardShape from "plugins/board/shape/Shape";
 
@@ -48,6 +47,9 @@ var getQuadGrid = function(scene) {
 var getHexagonGrid = function(scene) {
   var staggeraxis = "x";
   var staggerindex = "odd";
+  console.log(scene);
+  console.log(scene.rexBoard);
+  console.log(scene.rexBoard.add);
   var grid = scene.rexBoard.add.hexagonGrid({
     x: 100,
     y: 100,
