@@ -12,17 +12,21 @@ export default class MainScene extends Phaser.Scene {
 
   create() {
     // create board
-    var config = {
-      grid: getHexagonGrid(this),
+    this.tileCountW = 40;
+    this.tileCountH = 19;
+    this.tileSize = 40;
+
+    let config = {
+      grid: getHexagonGrid(this, this.tileSize),
       // grid: getQuadGrid(this),
-      width: 50,
-      height: 12,
+      width: this.tileCountW,
+      height: this.tileCountH,
       // wrap: true
     };
     this.board = new GameBoard(this, config);
     // this.board.i nfinityMode = true;
     // add chess
-    this.chessA = new ChessA({board: this.board, movingPoints: 10});
+    this.chessA = new ChessA({board: this.board, movingPoints: 10, tileXY: {x: 0, y:0}});
     // this.chessB = new ChessA({board: this.board, movingPoints: 2});
     // this.cameras.main.startFollow(this.chessA);
 
@@ -47,7 +51,8 @@ export default class MainScene extends Phaser.Scene {
         down: cursors.down,
         speed: 0.5
     });
-    this.cameras.main.setBounds(0, 0, 1600, 1200);
+    // this.cameras.main.setBounds(0, 0, this.tileCountW * this.tileSize, this.tileCountH * this.tileSize * 1.82);
+    this.cameras.main.setBounds(0, 0, 5000, 5000);
 
     this.add
     .text(16, 16, "Arrow keys to scroll", {
@@ -63,7 +68,7 @@ export default class MainScene extends Phaser.Scene {
         y: 0
     }
 
-    // this.cameras.main.startFollow(this.chessA);
+    // 
 
 
     // console.log(this.cameras.main);
@@ -107,13 +112,13 @@ var getQuadGrid = function(scene) {
   return grid;
 };
 
-var getHexagonGrid = function(scene) {
+var getHexagonGrid = function(scene, size) {
   var staggeraxis = "y";
   var staggerindex = "odd";
   var grid = scene.rexBoard.add.hexagonGrid({
-    x: 30,
-    y: 30,
-    size: 30,
+    x: size,
+    y: size,
+    size: size,
     staggeraxis: staggeraxis,
     staggerindex: staggerindex
   });
@@ -156,18 +161,19 @@ class Blocker extends BoardShape {
 class ChessA extends BoardShape {
   constructor(options = {}) {
     let {board, tileXY, movingPoints} = options;
-    var scene = board.scene;
     if (tileXY === undefined) {
       tileXY = board.getRandomEmptyTileXY(0);
     }
     // Shape(board, tileX, tileY, tileZ, fillColor, fillAlpha, addToBoard)
     super(board, tileXY.x, tileXY.y, 0, 0x00cc00);
-    scene.add.existing(this);
+    this.scene = board.scene;
+
+    this.scene.add.existing(this);
     this.setDepth(1);
 
     // add behaviors
-    this.moveTo = scene.rexBoard.add.moveTo(this);
-    this.pathFinder = scene.rexBoard.add.pathFinder(this, {
+    this.moveTo = this.scene.rexBoard.add.moveTo(this);
+    this.pathFinder = this.scene.rexBoard.add.pathFinder(this, {
       occupiedTest: true
     });
 
@@ -199,14 +205,18 @@ class ChessA extends BoardShape {
     if (this.moveTo.isRunning) {
       return false;
     }
-    var tileXYArray = this.pathFinder.getPath(endTile.rexChess.tileXYZ);
+
+    let tileXYArray = this.pathFinder.getPath(endTile.rexChess.tileXYZ);
     console.log('ChessA.moveToTile tileXYArray',  );
+    this.scene.cameras.main.startFollow(this);
     this.moveAlongPath(tileXYArray);
+
     return true;
   }
 
   moveAlongPath(path) {
     if (path.length === 0) {
+        this.scene.cameras.main.stopFollow();
       this.showMoveableArea();
       return;
     }
@@ -219,6 +229,16 @@ class ChessA extends BoardShape {
       this
     );
     this.moveTo.moveTo(path.shift());
+
+    // const cursors = this.scene.input.keyboard.createCursorKeys();
+    // this.scene.controls = new Phaser.Cameras.Controls.FixedKeyControl({
+    //     camera: this.scene.cameras.main,
+    //     left: cursors.left,
+    //     right: cursors.right,
+    //     up: cursors.up,
+    //     down: cursors.down,
+    //     speed: 0.5
+    // });
     return this;
   }
 }
