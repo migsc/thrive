@@ -41,8 +41,8 @@ var onPointerDown = function (pointer) {
     }
 
     // Get touched tileX, tileY
-    var tileX = this.worldXYToTileX(pointer.x, pointer.y),
-        tileY = this.worldXYToTileY(pointer.x, pointer.y);
+    var tileX = this.worldXYToTileX(pointer.worldX, pointer.worldY),
+        tileY = this.worldXYToTileY(pointer.worldX, pointer.worldY);
     this.input.tilePosition.x = tileX;
     this.input.tilePosition.y = tileY;
     if (!this.contains(tileX, tileY)) {

@@ -3,7 +3,7 @@ import "phaser";
 import MainScene from "scenes/main";
 import BoardPlugin from "plugins/board-plugin";
 
-new Phaser.Game({
+let game = new Phaser.Game({
   type: Phaser.AUTO,
   width: 800,
   height: 600,
@@ -24,3 +24,5 @@ new Phaser.Game({
     ]
   }
 });
+
+console.log('game', game);
