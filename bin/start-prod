@@ -1,2 +1,2 @@
 #!/bin/bash
-yarn webpack-dev-server
+./node-modules/.bin/webpack-dev-server
