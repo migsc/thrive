@@ -5,8 +5,8 @@ import BoardPlugin from "plugins/board-plugin";
 
 let game = new Phaser.Game({
   type: Phaser.AUTO,
-  width: 800,
-  height: 600,
+  width: window.innerWidth * window.devicePixelRatio,
+  height: window.innerHeight * window.devicePixelRatio,
   physics: {
     default: "arcade",
     arcade: {
