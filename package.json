@@ -4,6 +4,7 @@
   "description": "A videogame",
   "main": "index.js",
   "scripts": {
+    "build": "webpack",
     "start": "./bin/start",
     "start-prod": "./bin/start-prod",
     "test": "echo \"Error: no test specified\" && exit 1"

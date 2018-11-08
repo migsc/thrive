@@ -9,7 +9,7 @@ module.exports = {
   },
 
   output: {
-    path: path.resolve(__dirname, 'build'),
+    path: path.resolve(__dirname, 'www'),
     filename: 'app.bundle.js'
   },
 
@@ -41,18 +41,18 @@ module.exports = {
   },
 
   devServer: {
-    contentBase: path.resolve(__dirname, 'build'),
+    contentBase: path.resolve(__dirname, 'www'),
   },
 
   plugins: [
     new CopyWebpackPlugin([
       {
         from: path.resolve(__dirname, 'index.html'),
-        to: path.resolve(__dirname, 'build')
+        to: path.resolve(__dirname, 'www')
       },
       {
         from: path.resolve(__dirname, 'assets', '**', '*'),
-        to: path.resolve(__dirname, 'build')
+        to: path.resolve(__dirname, 'www')
       }
     ]),
     new webpack.DefinePlugin({
