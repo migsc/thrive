@@ -20,16 +20,19 @@ export default class MainScene extends Phaser.Scene {
       grid: getHexagonGrid(this, this.tileSize),
       // grid: getQuadGrid(this),
       width: this.tileCountW,
-      height: this.tileCountH,
+      height: this.tileCountH
       // wrap: true
     };
     this.board = new GameBoard(this, config);
     // this.board.i nfinityMode = true;
     // add chess
-    this.chessA = new ChessA({board: this.board, movingPoints: 10, tileXY: {x: 0, y:0}});
+    this.chessA = new ChessA({
+      board: this.board,
+      movingPoints: 10,
+      tileXY: { x: 0, y: 0 }
+    });
     // this.chessB = new ChessA({board: this.board, movingPoints: 2});
     // this.cameras.main.startFollow(this.chessA);
-
 
     // add some blockers
     for (var i = 0; i < 20; i++) {
@@ -39,42 +42,31 @@ export default class MainScene extends Phaser.Scene {
     this.chessA.showMoveableArea();
     this.cameras.main.fadeIn(1500);
 
-    console.log('MainScene.create this',  this, this.game.debug);
-
+    console.log("MainScene.create this", this, this.game.debug);
 
     const cursors = this.input.keyboard.createCursorKeys();
     this.controls = new Phaser.Cameras.Controls.FixedKeyControl({
-        camera: this.cameras.main,
-        left: cursors.left,
-        right: cursors.right,
-        up: cursors.up,
-        down: cursors.down,
-        speed: 0.5
+      camera: this.cameras.main,
+      left: cursors.left,
+      right: cursors.right,
+      up: cursors.up,
+      down: cursors.down,
+      speed: 0.5
     });
     // this.cameras.main.setBounds(0, 0, this.tileCountW * this.tileSize, this.tileCountH * this.tileSize * 1.82);
     this.cameras.main.setBounds(0, 0, 5000, 5000);
 
-    this.add
-    .text(16, 16, "Arrow keys to scroll", {
-      font: "18px monospace",
-      fill: "#ffffff",
-      padding: { x: 20, y: 10 },
-      backgroundColor: "#000000"
-    })
-    .setScrollFactor(0);
-
     this.lastMovedToTile = {
-        x: 0,
-        y: 0
-    }
+      x: 0,
+      y: 0
+    };
 
-    // 
-
+    //
 
     // console.log(this.cameras.main);
   }
 
-  update(time, delta){
+  update(time, delta) {
     //this.add
     // .text(16, 64, `Camera x:${this.cameras.main.worldView.x}, y: ${this.cameras.main.worldView.y}`, {
     //   font: "18px monospace",
@@ -87,7 +79,7 @@ export default class MainScene extends Phaser.Scene {
     this.controls.update(delta);
     // this.board.gridAlign();
     // this.board.grid.x++
-    
+
     // console.log(this.board);
     // console.log(this.cameras.main);
 
@@ -96,7 +88,7 @@ export default class MainScene extends Phaser.Scene {
     // this.cameras.main.scrollX++;
   }
 
-  render(){
+  render() {
     scene.debug.cameraInfo(game.camera, 32, 32);
   }
 }
@@ -137,7 +129,7 @@ class GameBoard extends Board {
         alpha: 1
       }
     });
-    this.forEachTileXY((tileXY, board) =>{
+    this.forEachTileXY((tileXY, board) => {
       var points = board.getGridPoints(tileXY.x, tileXY.y, true);
       this.graphics.strokePoints(points, true);
     });
@@ -160,7 +152,7 @@ class Blocker extends BoardShape {
 
 class ChessA extends BoardShape {
   constructor(options = {}) {
-    let {board, tileXY, movingPoints} = options;
+    let { board, tileXY, movingPoints } = options;
     if (tileXY === undefined) {
       tileXY = board.getRandomEmptyTileXY(0);
     }
@@ -200,14 +192,14 @@ class ChessA extends BoardShape {
   }
 
   moveToTile(endTile) {
-    console.log('ChessA.moveToTile endTile', endTile, endTile.rexChess.tileXYZ);
+    console.log("ChessA.moveToTile endTile", endTile, endTile.rexChess.tileXYZ);
 
     if (this.moveTo.isRunning) {
       return false;
     }
 
     let tileXYArray = this.pathFinder.getPath(endTile.rexChess.tileXYZ);
-    console.log('ChessA.moveToTile tileXYArray',  );
+    console.log("ChessA.moveToTile tileXYArray");
     this.scene.cameras.main.startFollow(this);
     this.moveAlongPath(tileXYArray);
 
@@ -216,7 +208,7 @@ class ChessA extends BoardShape {
 
   moveAlongPath(path) {
     if (path.length === 0) {
-        this.scene.cameras.main.stopFollow();
+      this.scene.cameras.main.stopFollow();
       this.showMoveableArea();
       return;
     }
@@ -257,7 +249,12 @@ class MoveableTile extends BoardShape {
     this.on(
       "board.pointerdown",
       function(pointer) {
-        console.log(`Moving to title with x,y,pointer`, this.x, this.y, pointer);
+        console.log(
+          `Moving to title with x,y,pointer`,
+          this.x,
+          this.y,
+          pointer
+        );
         if (!chess.moveToTile(this)) {
           return;
         }
