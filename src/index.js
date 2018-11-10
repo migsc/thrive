@@ -1,6 +1,6 @@
 import "phaser";
 import "bootstrap";
-import "ui/bottom";
+import "ui";
 import "styles/index.scss";
 import MainScene from "scenes/main";
 import BoardPlugin from "plugins/board-plugin";
