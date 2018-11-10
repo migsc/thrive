@@ -1,5 +1,6 @@
 import "phaser";
-
+import "bootstrap";
+import "styles/index.scss";
 import MainScene from "scenes/main";
 import BoardPlugin from "plugins/board-plugin";
 
@@ -25,4 +26,4 @@ let game = new Phaser.Game({
   }
 });
 
-console.log('game', game);
+console.log("game", game);
