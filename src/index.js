@@ -1,30 +1,33 @@
-import "phaser";
 import "bootstrap";
-import "ui";
+
+import { h, render, Component } from "preact";
+/** @jsx h */
+
+import linkState from "linkstate";
+
+import game from "game";
+
+import BottomUI from "./ui/bottom";
+
 import "styles/index.scss";
-import MainScene from "scenes/main";
-import BoardPlugin from "plugins/board-plugin";
+import "ui/styles.scss";
 
-let game = new Phaser.Game({
-  type: Phaser.AUTO,
-  width: window.innerWidth * window.devicePixelRatio,
-  height: window.innerHeight * window.devicePixelRatio,
-  physics: {
-    default: "arcade",
-    arcade: {
-      gravity: { y: 200 }
-    }
-  },
-  scene: [MainScene],
-  plugins: {
-    scene: [
-      {
-        key: "rexBoard",
-        plugin: BoardPlugin,
-        mapping: "rexBoard"
-      }
-    ]
+class App extends Component {
+  constructor() {
+    super();
+    this.state = {
+      text: "hello"
+    };
   }
-});
 
-console.log("game", game);
+  render({}, { text }) {
+    return (
+      <app>
+        <BottomUI />
+      </app>
+    );
+  }
+}
+
+// Start 'er up:
+render(<App />, document.querySelector("#ui"));

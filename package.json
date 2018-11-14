@@ -32,6 +32,7 @@
     "tether": "^1.4.5"
   },
   "devDependencies": {
+    "@fortawesome/fontawesome-free": "^5.5.0",
     "autoprefixer": "^9.3.1",
     "babel-core": "6",
     "babel-loader": "^7.0.0",

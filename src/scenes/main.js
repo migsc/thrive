@@ -28,7 +28,7 @@ export default class MainScene extends Phaser.Scene {
     // add chess
     this.chessA = new ChessA({
       board: this.board,
-      movingPoints: 10,
+      movingPoints: 3,
       tileXY: { x: 0, y: 0 }
     });
     // this.chessB = new ChessA({board: this.board, movingPoints: 2});
@@ -60,6 +60,17 @@ export default class MainScene extends Phaser.Scene {
       x: 0,
       y: 0
     };
+
+    this.game.events.on(
+      "onshowmoveable",
+      this.chessA.showMoveableArea,
+      this.chessA
+    );
+    this.game.events.on(
+      "onhidemoveable",
+      this.chessA.hideMoveableArea,
+      this.chessA
+    );
 
     //
 
@@ -244,23 +255,21 @@ class MoveableTile extends BoardShape {
     super(board, tileXY.x, tileXY.y, -1, 0x330000);
     scene.add.existing(this);
     this.setScale(0.5);
+    this.tileXY = tileXY;
+    this.chess = chess;
+    this.events = chess.scene.game.events;
 
     // on pointer down, move to this tile
-    this.on(
-      "board.pointerdown",
-      function(pointer) {
-        console.log(
-          `Moving to title with x,y,pointer`,
-          this.x,
-          this.y,
-          pointer
-        );
-        if (!chess.moveToTile(this)) {
-          return;
-        }
-        this.setFillStyle(0xff0000);
-      },
-      this
-    );
+    this.on("board.pointerdown", this.onPointerDown.bind(this), this);
+  }
+
+  onPointerDown(pointer) {
+    console.log(`Moving to tile with x,y,pointer`, this.x, this.y, pointer);
+    if (!this.chess.moveToTile(this)) {
+      return;
+    }
+    this.setFillStyle(0xff0000);
+    console.log(this);
+    this.events.emit("ontilemoved", { tile: this, pointer });
   }
 }
