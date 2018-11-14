@@ -1,3 +1,2 @@
 #!/bin/bash
-ls
 http-server www -p $PORT
