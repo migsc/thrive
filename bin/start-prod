@@ -1,3 +1,4 @@
 #!/bin/bash
 webpack
+ls
 http-server www -p $PORT
