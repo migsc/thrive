@@ -22,6 +22,7 @@
   "homepage": "https://github.com/migsc/thrive#readme",
   "browserslist": "last 2 versions",
   "dependencies": {
+    "webpack": "^3.12.0",
     "bootstrap": "^4.1.3",
     "font-awesome": "^4.7.0",
     "http-server": "^0.11.1",
