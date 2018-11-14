@@ -1,23 +1,22 @@
-import $ from "jquery";
-import view from "./view.html";
+import { h, render, Component } from "preact";
+/** @jsx h */
 
-class UIBottom {
-  constructor() {
-    this.selector = "#bottom";
-  }
+import "./styles.scss";
 
-  select() {
-    return $(this.selector);
-  }
-
-  mount() {
-    $("#ui").append(view);
-    this.select().on("click", this.downButtonPressed.bind(this));
-  }
-
+export default class UIBottom {
   downButtonPressed(ev) {
     console.log("you did good kid. keep going");
   }
-}
 
-export default { view, ref: new UIBottom() };
+  render() {
+    return (
+      <div id="bottom">
+        <p>Arrow keys to scroll.</p>
+        <button id="#down" type="button" class="btn btn-outline-warning">
+          Move down
+          <i class="fas fa-arrow-down" />
+        </button>
+      </div>
+    );
+  }
+}

@@ -1,8 +1,28 @@
-import $ from "jquery";
-import bottom from "ui/bottom";
+import { h, render, Component } from "preact";
+/** @jsx h */
 
-$(function() {
-  bottom.ref.mount();
-});
+import linkState from "linkstate";
 
-export { bottom };
+import BottomUI from "./bottom";
+
+import "./styles.scss";
+
+class App extends Component {
+  constructor() {
+    super();
+    this.state = {
+      text: "hello"
+    };
+  }
+
+  render({}, { text }) {
+    return (
+      <app>
+        <BottomUI />
+      </app>
+    );
+  }
+}
+
+// Start 'er up:
+render(<App />, document.querySelector("#ui"));
