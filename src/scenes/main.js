@@ -10,12 +10,7 @@ export default class MainScene extends Phaser.Scene {
 
   preload() {}
 
-  create() {
-    // create board
-    this.tileCountW = 40;
-    this.tileCountH = 19;
-    this.tileSize = 40;
-
+  _initializeNewGame() {
     let config = {
       grid: getHexagonGrid(this, this.tileSize),
       // grid: getQuadGrid(this),
@@ -23,23 +18,51 @@ export default class MainScene extends Phaser.Scene {
       height: this.tileCountH
       // wrap: true
     };
+
     this.board = new GameBoard(this, config);
-    // this.board.i nfinityMode = true;
-    // add chess
-    this.chessA = new ChessA({
-      board: this.board,
-      movingPoints: 3,
-      tileXY: { x: 0, y: 0 }
-    });
-    // this.chessB = new ChessA({board: this.board, movingPoints: 2});
-    // this.cameras.main.startFollow(this.chessA);
+
+    this.resources = {
+      nectar: 0,
+      honey: 100,
+      jelly: 0,
+      wax: 100
+    };
+
+    this.units = [
+      new PlayerUnit({
+        board: this.board,
+        movingPoints: 3,
+        tileXY: { x: 0, y: 3 }
+      }),
+      new PlayerUnit({
+        board: this.board,
+        movingPoints: 3,
+        tileXY: { x: 0, y: 7 }
+      }),
+      new PlayerUnit({
+        board: this.board,
+        movingPoints: 3,
+        tileXY: { x: 1, y: 4 }
+      })
+    ];
+
+    this.activeUnit = this.units[0];
+  }
+
+  create() {
+    // create board
+    this.tileCountW = 40;
+    this.tileCountH = 19;
+    this.tileSize = 40;
+
+    // Initialize resources
+    this._initializeNewGame();
 
     // add some blockers
     for (var i = 0; i < 20; i++) {
       new Blocker(this.board);
     }
 
-    this.chessA.showMoveableArea();
     this.cameras.main.fadeIn(1500);
 
     console.log("MainScene.create this", this, this.game.debug);
@@ -53,6 +76,7 @@ export default class MainScene extends Phaser.Scene {
       down: cursors.down,
       speed: 0.5
     });
+
     // this.cameras.main.setBounds(0, 0, this.tileCountW * this.tileSize, this.tileCountH * this.tileSize * 1.82);
     this.cameras.main.setBounds(0, 0, 5000, 5000);
 
@@ -61,18 +85,18 @@ export default class MainScene extends Phaser.Scene {
       y: 0
     };
 
-    this.game.events.on(
-      "onshowmoveable",
-      this.chessA.showMoveableArea,
-      this.chessA
-    );
-    this.game.events.on(
-      "onhidemoveable",
-      this.chessA.hideMoveableArea,
-      this.chessA
-    );
+    this.activeUnit.select();
 
-    //
+    this.game.events.on(
+      "ui.showmoveable",
+      this.activeUnit.showMoveableArea,
+      this.activeUnit
+    );
+    this.game.events.on(
+      "ui.hidemoveable",
+      this.activeUnit.hideMoveableArea,
+      this.activeUnit
+    );
 
     // console.log(this.cameras.main);
   }
@@ -99,23 +123,15 @@ export default class MainScene extends Phaser.Scene {
     // this.cameras.main.scrollX++;
   }
 
-  render() {
-    scene.debug.cameraInfo(game.camera, 32, 32);
+  setActiveUnit(unit) {
+    this.units.forEach(u => {
+      u.hideMoveableArea();
+    });
+    this.activeUnit = unit;
   }
 }
 
-var getQuadGrid = function(scene) {
-  var grid = scene.rexBoard.add.quadGrid({
-    x: 400,
-    y: 100,
-    cellWidth: 100,
-    cellHeight: 50,
-    type: 1
-  });
-  return grid;
-};
-
-var getHexagonGrid = function(scene, size) {
+const getHexagonGrid = function(scene, size) {
   var staggeraxis = "y";
   var staggerindex = "odd";
   var grid = scene.rexBoard.add.hexagonGrid({
@@ -161,9 +177,9 @@ class Blocker extends BoardShape {
   }
 }
 
-class ChessA extends BoardShape {
+class PlayerUnit extends BoardShape {
   constructor(options = {}) {
-    let { board, tileXY, movingPoints } = options;
+    let { board, tileXY, movingPoints, isTurnDone } = options;
     if (tileXY === undefined) {
       tileXY = board.getRandomEmptyTileXY(0);
     }
@@ -183,6 +199,19 @@ class ChessA extends BoardShape {
     // private members
     this.movingPoints = movingPoints || 4;
     this.moveableTiles = [];
+    this.isTurnDone = !!isTurnDone || false;
+
+    // events
+    this.on("board.pointerdown", this.onPointerDown.bind(this), this);
+  }
+
+  onPointerDown(pointer) {
+    this.select();
+  }
+
+  select() {
+    this.scene.setActiveUnit(this);
+    this.showMoveableArea();
   }
 
   showMoveableArea() {
@@ -210,6 +239,7 @@ class ChessA extends BoardShape {
     }
 
     let tileXYArray = this.pathFinder.getPath(endTile.rexChess.tileXYZ);
+    this.movingPoints -= tileXYArray.length;
     console.log("ChessA.moveToTile tileXYArray");
     this.scene.cameras.main.startFollow(this);
     this.moveAlongPath(tileXYArray);
@@ -226,38 +256,30 @@ class ChessA extends BoardShape {
 
     this.moveTo.once(
       "complete",
-      function() {
+      () => {
         this.moveAlongPath(path);
       },
       this
     );
+
     this.moveTo.moveTo(path.shift());
 
-    // const cursors = this.scene.input.keyboard.createCursorKeys();
-    // this.scene.controls = new Phaser.Cameras.Controls.FixedKeyControl({
-    //     camera: this.scene.cameras.main,
-    //     left: cursors.left,
-    //     right: cursors.right,
-    //     up: cursors.up,
-    //     down: cursors.down,
-    //     speed: 0.5
-    // });
     return this;
   }
 }
 
 class MoveableTile extends BoardShape {
-  constructor(chess, tileXY) {
+  constructor(unit, tileXY) {
     //   console.log('MoveableTile constructor tileXY', tileXY);
-    var board = chess.rexChess.board;
+    var board = unit.rexChess.board;
     var scene = board.scene;
     // Shape(board, tileX, tileY, tileZ, fillColor, fillAlpha, addToBoard)
     super(board, tileXY.x, tileXY.y, -1, 0x330000);
     scene.add.existing(this);
     this.setScale(0.5);
     this.tileXY = tileXY;
-    this.chess = chess;
-    this.events = chess.scene.game.events;
+    this.unit = unit;
+    this.events = unit.scene.game.events;
 
     // on pointer down, move to this tile
     this.on("board.pointerdown", this.onPointerDown.bind(this), this);
@@ -265,7 +287,7 @@ class MoveableTile extends BoardShape {
 
   onPointerDown(pointer) {
     console.log(`Moving to tile with x,y,pointer`, this.x, this.y, pointer);
-    if (!this.chess.moveToTile(this)) {
+    if (!this.unit.moveToTile(this)) {
       return;
     }
     this.setFillStyle(0xff0000);

@@ -30,14 +30,14 @@ export default class UIBottom extends Component {
   }
 
   onShowMoveable(ev) {
-    game.events.emit("onshowmoveable");
+    game.events.emit("ui.showmoveable");
     this.setState({
       shouldShowMoveable: true
     });
   }
 
   onHideMoveable(ev) {
-    game.events.emit("onhidemoveable");
+    game.events.emit("ui.hidemoveable");
     this.setState({
       shouldShowMoveable: false
     });
