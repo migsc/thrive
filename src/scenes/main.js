@@ -21,6 +21,7 @@ export default class MainScene extends Phaser.Scene {
 
     this.board = new GameBoard(this, config);
 
+    this.round = 1;
     this.resources = {
       nectar: 0,
       honey: 100,
@@ -31,18 +32,15 @@ export default class MainScene extends Phaser.Scene {
     this.units = [
       new PlayerUnit({
         board: this.board,
-        movingPoints: 3,
-        tileXY: { x: 0, y: 3 }
+        movingPoints: 3
       }),
       new PlayerUnit({
         board: this.board,
-        movingPoints: 3,
-        tileXY: { x: 0, y: 7 }
+        movingPoints: 3
       }),
       new PlayerUnit({
         board: this.board,
-        movingPoints: 3,
-        tileXY: { x: 1, y: 4 }
+        movingPoints: 3
       })
     ];
 
@@ -87,6 +85,8 @@ export default class MainScene extends Phaser.Scene {
 
     this.activeUnit.select();
 
+    this.game.events.emit("game.roundstart", { round: this.round });
+
     this.game.events.on(
       "ui.showmoveable",
       this.activeUnit.showMoveableArea,
@@ -97,8 +97,38 @@ export default class MainScene extends Phaser.Scene {
       this.activeUnit.hideMoveableArea,
       this.activeUnit
     );
-
+    this.game.events.on("unit.movedone", this.selectNextUnit, this);
     // console.log(this.cameras.main);
+  }
+
+  selectNextUnit() {
+    let nextUnit = this.units.find(u => u.canAct());
+    if (nextUnit) {
+      nextUnit.select();
+    } else {
+      this.endRound();
+    }
+  }
+
+  endRound() {
+    this.game.events.emit("game.roundend", { round: this.round });
+    this.startRound();
+  }
+
+  startRound() {
+    this.game.events.emit("game.roundstart", { round: ++this.round });
+    this.units.forEach(u => {
+      u.resetMovingPoints();
+    });
+    this.selectNextUnit();
+  }
+
+  getWidth() {
+    return window.innerWidth;
+  }
+
+  getHeight() {
+    return window.innerHeight;
   }
 
   update(time, delta) {
@@ -197,7 +227,7 @@ class PlayerUnit extends BoardShape {
     });
 
     // private members
-    this.movingPoints = movingPoints || 4;
+    this.initialMovingPoints = this.movingPoints = movingPoints || 4;
     this.moveableTiles = [];
     this.isTurnDone = !!isTurnDone || false;
 
@@ -209,8 +239,21 @@ class PlayerUnit extends BoardShape {
     this.select();
   }
 
+  resetMovingPoints() {
+    this.movingPoints = this.initialMovingPoints;
+  }
+
+  canAct() {
+    return this.movingPoints > 0;
+  }
+
   select() {
     this.scene.setActiveUnit(this);
+    this.scene.cameras.main.pan(
+      this.x + this.scene.getWidth() / 2,
+      this.y + this.scene.getHeight() / 2,
+      1000
+    );
     this.showMoveableArea();
   }
 
@@ -241,7 +284,9 @@ class PlayerUnit extends BoardShape {
     let tileXYArray = this.pathFinder.getPath(endTile.rexChess.tileXYZ);
     this.movingPoints -= tileXYArray.length;
     console.log("ChessA.moveToTile tileXYArray");
-    this.scene.cameras.main.startFollow(this);
+    // this.scene.cameras.main.startFollow(this);
+    this.events = this.scene.game.events;
+
     this.moveAlongPath(tileXYArray);
 
     return true;
@@ -249,8 +294,11 @@ class PlayerUnit extends BoardShape {
 
   moveAlongPath(path) {
     if (path.length === 0) {
-      this.scene.cameras.main.stopFollow();
+      // this.scene.cameras.main.stopFollow();
       this.showMoveableArea();
+
+      this.events.emit("unit.movedone");
+
       return;
     }
 
@@ -290,8 +338,9 @@ class MoveableTile extends BoardShape {
     if (!this.unit.moveToTile(this)) {
       return;
     }
+
     this.setFillStyle(0xff0000);
     console.log(this);
-    this.events.emit("ontilemoved", { tile: this, pointer });
+    this.events.emit("tile.moved", { tile: this, pointer });
   }
 }

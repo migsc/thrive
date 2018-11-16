@@ -12,31 +12,37 @@ export default class UIBottom extends Component {
         x: "?",
         y: "?"
       },
+      turn: "?",
       shouldShowMoveable: true
     };
-
-    console.log("gammmme?", game);
   }
 
   componentDidMount() {
-    game.events.on("ontilemoved", this.handleTileMoved.bind(this));
+    game.events.on("tile.moved", this.handleTileMoved.bind(this));
+    game.events.on("game.roundstart", this.roundStarted.bind(this));
   }
 
-  handleTileMoved(ev) {
-    console.log("handleTileMoved", ev);
+  handleTileMoved(e) {
+    console.log("handleTileMoved", e);
     this.setState({
-      activeTile: ev.tile.tileXY
+      activeTile: e.tile.tileXY
     });
   }
 
-  onShowMoveable(ev) {
+  roundStarted(e) {
+    this.setState({
+      currentRound: e.round
+    });
+  }
+
+  onShowMoveable() {
     game.events.emit("ui.showmoveable");
     this.setState({
       shouldShowMoveable: true
     });
   }
 
-  onHideMoveable(ev) {
+  onHideMoveable() {
     game.events.emit("ui.hidemoveable");
     this.setState({
       shouldShowMoveable: false
@@ -44,12 +50,13 @@ export default class UIBottom extends Component {
   }
 
   render() {
-    let { activeTile, shouldShowMoveable } = this.state;
+    let { activeTile, currentRound, shouldShowMoveable } = this.state;
     return (
       <div id="bottom">
         <h2>
           Active tile - x:{activeTile.x}, y:{activeTile.y}
         </h2>
+        <h2>Round: {currentRound}</h2>
         <h2>
           {shouldShowMoveable ? (
             <button
