@@ -69,6 +69,52 @@ export default class MainScene extends Phaser.Scene {
       })
     ];
 
+    this.resources = [];
+    let placementProbability;
+    let initialPlacementProbability = (placementProbability = 0.9);
+
+    const place = (prob, i) => {
+      if (Math.random() < prob) {
+        this.resources.push(
+          new Resource({
+            board: this.board,
+            tileXY: {
+              x: i,
+              y:
+                this.board.verticalTitleCount -
+                1 -
+                Math.floor(Math.random() * 3)
+            }
+          })
+        );
+        if (prob < 0.3) {
+          prob = 0;
+        } else {
+          prob -= 0.3;
+        }
+      } else {
+        prob += 0.05;
+      }
+
+      return prob;
+    };
+
+    let iX;
+    for (iX = 0; iX < centerCoords.x - 8; iX++) {
+      placementProbability = place(placementProbability, iX);
+    }
+
+    for (iX = this.board.width - 1; iX >= centerCoords.x + 8; iX--) {
+      placementProbability = place(placementProbability, iX);
+    }
+
+    // placement progression
+    // 100%
+    // 90%
+    // 80%
+    // 70%
+    //
+
     this.activeUnit = this.units[0];
   }
 
@@ -251,6 +297,19 @@ class Blocker extends BoardShape {
   }
 }
 
+class Resource extends BoardShape {
+  constructor(options) {
+    let { board, tileXY } = options;
+    var scene = board.scene;
+    if (tileXY === undefined) {
+      tileXY = board.getRandomEmptyTileXY(0);
+    }
+    // Shape(board, tileX, tileY, tileZ, fillColor, fillAlpha, addToBoard)
+    super(board, tileXY.x, tileXY.y, 1, 0x0000ff, 0.5);
+    scene.add.existing(this);
+  }
+}
+
 class PlayerUnit extends BoardShape {
   constructor(options = {}) {
     let { board, tileXY, movingPoints, isTurnDone } = options;
@@ -299,6 +358,7 @@ class PlayerUnit extends BoardShape {
       1000
     );
     this.showMoveableArea();
+    this.scene.game.events.emit("game.selectunit", { unit: this });
   }
 
   showMoveableArea() {
