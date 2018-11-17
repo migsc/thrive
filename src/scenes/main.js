@@ -11,15 +11,15 @@ export default class MainScene extends Phaser.Scene {
   preload() {}
 
   _initializeNewGame() {
-    let config = {
-      grid: getHexagonGrid(this, this.tileSize),
-      // grid: getQuadGrid(this),
-      width: this.tileCountW,
-      height: this.tileCountH
-      // wrap: true
-    };
+    // create board
 
-    this.board = new GameBoard(this, config);
+    this.board = new GameBoard(this, {
+      grid: getHexagonGrid(this, 40),
+      // grid: getQuadGrid(this),
+      width: 54,
+      height: 20
+      // wrap: true
+    });
 
     this.round = 1;
     this.resources = {
@@ -29,18 +29,43 @@ export default class MainScene extends Phaser.Scene {
       wax: 100
     };
 
+    let centerCoords = this.board.getCenterCoordinates();
+
     this.units = [
+      // new PlayerUnit({
+      //   board: this.board,
+      //   movingPoints: 999
+      // }),
       new PlayerUnit({
         board: this.board,
-        movingPoints: 3
+        movingPoints: 3,
+        tileXY: {
+          x: centerCoords.x - 1,
+          y: centerCoords.y - 1
+        }
       }),
       new PlayerUnit({
         board: this.board,
-        movingPoints: 3
+        movingPoints: 3,
+        tileXY: {
+          x: centerCoords.x + 2,
+          y: centerCoords.y
+        }
       }),
       new PlayerUnit({
         board: this.board,
-        movingPoints: 3
+        movingPoints: 3,
+        tileXY: {
+          x: centerCoords.x - 2,
+          y: centerCoords.y + 1
+        }
+      })
+    ];
+
+    this.hive = [
+      new Room({
+        board: this.board,
+        tileXY: centerCoords
       })
     ];
 
@@ -48,18 +73,13 @@ export default class MainScene extends Phaser.Scene {
   }
 
   create() {
-    // create board
-    this.tileCountW = 40;
-    this.tileCountH = 19;
-    this.tileSize = 40;
-
     // Initialize resources
     this._initializeNewGame();
 
     // add some blockers
-    for (var i = 0; i < 20; i++) {
-      new Blocker(this.board);
-    }
+    // for (var i = 0; i < 20; i++) {
+    //   new Blocker({ board: this.board });
+    // }
 
     this.cameras.main.fadeIn(1500);
 
@@ -178,7 +198,10 @@ class GameBoard extends Board {
   constructor(scene, config) {
     // create board
     super(scene, config);
+
     // draw grid
+    this.horizontalTileCount = config.width;
+    this.verticalTitleCount = config.height;
     this.graphics = scene.add.graphics({
       lineStyle: {
         width: 1,
@@ -193,10 +216,31 @@ class GameBoard extends Board {
     // enable touch events
     this.setInteractive();
   }
+
+  getCenterCoordinates() {
+    return {
+      x: Math.round(this.horizontalTileCount / 2),
+      y: Math.round(this.verticalTitleCount / 2)
+    };
+  }
+}
+
+class Room extends BoardShape {
+  constructor(options) {
+    let { board, tileXY } = options;
+    var scene = board.scene;
+    if (tileXY === undefined) {
+      tileXY = board.getRandomEmptyTileXY(0);
+    }
+    // Shape(board, tileX, tileY, tileZ, fillColor, fillAlpha, addToBoard)
+    super(board, tileXY.x, tileXY.y, 1, 0xffff00, 0.5);
+    scene.add.existing(this);
+  }
 }
 
 class Blocker extends BoardShape {
-  constructor(board, tileXY) {
+  constructor(options) {
+    let { board, tileXY } = options;
     var scene = board.scene;
     if (tileXY === undefined) {
       tileXY = board.getRandomEmptyTileXY(0);
@@ -260,6 +304,7 @@ class PlayerUnit extends BoardShape {
   showMoveableArea() {
     this.hideMoveableArea();
     var tileXYArray = this.pathFinder.findArea(this.movingPoints);
+
     for (var i = 0, cnt = tileXYArray.length; i < cnt; i++) {
       this.moveableTiles.push(new MoveableTile(this, tileXYArray[i]));
     }
