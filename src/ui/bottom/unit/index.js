@@ -12,11 +12,13 @@ export default class UIUnit extends Component {
     };
   }
 
+  // This isn't being served yet
+
   render() {
     let { selectedUnit } = this.state;
     return (
       <div id="unit">
-        <h2>Moving points: {selectedUnit.movingPoints} </h2>
+        {selectedUnit && <h2>Moving points: {selectedUnit.movingPoints} </h2>}
       </div>
     );
   }
