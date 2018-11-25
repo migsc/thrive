@@ -8,17 +8,25 @@ export default class MainScene extends Phaser.Scene {
     });
   }
 
-  preload() {}
+  preload() {
+    this.load.tilemapJSON("map", "assets/map.json");
+    this.load.spritesheet("sprites", "assets/sprites.png", {
+      // TODO: Change this later to correspond to the actual hexagon size.
+      frameWidth: 64,
+      frameHeight: 64
+    });
+  }
 
   _initializeNewGame() {
     // create board
+    this.tileCountW = 300;
+    this.tileCountH = 20;
+    this.tileSize = 40;
 
     this.board = new GameBoard(this, {
-      grid: getHexagonGrid(this, 40),
-      // grid: getQuadGrid(this),
-      width: 54,
-      height: 20
-      // wrap: true
+      grid: getHexagonGrid(this, this.tileSize),
+      width: this.tileCountW,
+      height: this.tileCountH
     });
 
     this.round = 1;
@@ -30,36 +38,32 @@ export default class MainScene extends Phaser.Scene {
     };
 
     let centerCoords = this.board.getCenterCoordinates();
+    let defaultPlayerUnitConfig = {
+      board: this.board,
+      movingPoints: 3,
+      discoverRangePoints: 15,
+      tileXY: {
+        x: centerCoords.x - 2,
+        y: centerCoords.y + 1
+      }
+    };
+
+    const getGodUnit = () =>
+      new PlayerUnit(
+        Object.assign({}, defaultPlayerUnitConfig, {
+          movingPoints: 999,
+          tileXY: {
+            x: 0,
+            y: 19
+          }
+        })
+      );
 
     this.units = [
-      // new PlayerUnit({
-      //   board: this.board,
-      //   movingPoints: 999
-      // }),
-      new PlayerUnit({
-        board: this.board,
-        movingPoints: 3,
-        tileXY: {
-          x: centerCoords.x - 1,
-          y: centerCoords.y - 1
-        }
-      }),
-      new PlayerUnit({
-        board: this.board,
-        movingPoints: 3,
-        tileXY: {
-          x: centerCoords.x + 2,
-          y: centerCoords.y
-        }
-      }),
-      new PlayerUnit({
-        board: this.board,
-        movingPoints: 3,
-        tileXY: {
-          x: centerCoords.x - 2,
-          y: centerCoords.y + 1
-        }
-      })
+      getGodUnit(),
+      new PlayerUnit(defaultPlayerUnitConfig),
+      new PlayerUnit(defaultPlayerUnitConfig),
+      new PlayerUnit(defaultPlayerUnitConfig)
     ];
 
     this.hive = [
@@ -81,9 +85,7 @@ export default class MainScene extends Phaser.Scene {
             tileXY: {
               x: i,
               y:
-                this.board.verticalTitleCount -
-                1 -
-                Math.floor(Math.random() * 3)
+                this.board.verticalTileCount - 1 - Math.floor(Math.random() * 3)
             }
           })
         );
@@ -141,8 +143,21 @@ export default class MainScene extends Phaser.Scene {
       speed: 0.5
     });
 
-    // this.cameras.main.setBounds(0, 0, this.tileCountW * this.tileSize, this.tileCountH * this.tileSize * 1.82);
-    this.cameras.main.setBounds(0, 0, 5000, 5000);
+    this.cameras.main.setBounds(
+      0,
+      0,
+      // (this.tileCountW * this.tileSize -
+      //   (Math.ceil(this.tileCountW / 2) * this.tileSize) / 2) *
+      //   window.devicePixelRatio,
+      // this.tileCountW * this.tileSize * window.devicePixelRatio,
+
+      // this.tileCountH * this.tileSize * window.devicePixelRatio
+
+      // Manually calculated for 300x20 tiles
+      20000,
+      3000
+    );
+    // this.cameras.main.setBounds(0, 0, 30000, 5000);
 
     this.lastMovedToTile = {
       x: 0,
@@ -164,6 +179,7 @@ export default class MainScene extends Phaser.Scene {
       this.activeUnit
     );
     this.game.events.on("unit.movedone", this.selectNextUnit, this);
+
     // console.log(this.cameras.main);
   }
 
@@ -217,6 +233,14 @@ export default class MainScene extends Phaser.Scene {
     //this.cameras.main.follow(this.chessA);
     // this.board.grid.x++;
     // this.cameras.main.scrollX++;
+
+    ///// Check if any player units are moving
+    this.units.forEach(u => {
+      if (u.moveTo.isRunning) {
+        console.log("movement!");
+        u.discover();
+      }
+    });
   }
 
   setActiveUnit(unit) {
@@ -247,7 +271,7 @@ class GameBoard extends Board {
 
     // draw grid
     this.horizontalTileCount = config.width;
-    this.verticalTitleCount = config.height;
+    this.verticalTileCount = config.height;
     this.graphics = scene.add.graphics({
       lineStyle: {
         width: 1,
@@ -257,19 +281,39 @@ class GameBoard extends Board {
     });
     this.forEachTileXY((tileXY, board) => {
       var points = board.getGridPoints(tileXY.x, tileXY.y, true);
-      this.graphics.strokePoints(points, true);
+      this.graphics.strokePoints(points, true); // This draws the lines you see between the hexagons.
     });
     // enable touch events
     this.setInteractive();
+
+    this.on(
+      "board.pointerdown",
+      pointer => {
+        console.log("tiledown pointer", pointer);
+      },
+      this
+    );
   }
 
   getCenterCoordinates() {
     return {
       x: Math.round(this.horizontalTileCount / 2),
-      y: Math.round(this.verticalTitleCount / 2)
+      y: Math.round(this.verticalTileCount / 2)
     };
   }
 }
+
+// class Tile extends Shape {
+//   constructor(options) {
+//     let { board, tileXY } = options;
+//     var scene = board.scene;
+//     if (tileXY === undefined) {
+//       throw "Please provide coordinates in tileXY. e.g. {x: 0, y: 5}";
+//     }
+//     // Shape(board, tileX, tileY, tileZ, fillColor, fillAlpha, addToBoard)
+//     super(board, tileXY.x, tileXY.y, 1, 0xffff00, 0.5);
+//   }
+// }
 
 class Room extends BoardShape {
   constructor(options) {
@@ -312,7 +356,13 @@ class Resource extends BoardShape {
 
 class PlayerUnit extends BoardShape {
   constructor(options = {}) {
-    let { board, tileXY, movingPoints, isTurnDone } = options;
+    let {
+      board,
+      tileXY,
+      movingPoints,
+      discoverRangePoints,
+      isTurnDone
+    } = options;
     if (tileXY === undefined) {
       tileXY = board.getRandomEmptyTileXY(0);
     }
@@ -331,6 +381,7 @@ class PlayerUnit extends BoardShape {
 
     // private members
     this.initialMovingPoints = this.movingPoints = movingPoints || 4;
+    this.discoverRangePoints = discoverRangePoints;
     this.moveableTiles = [];
     this.isTurnDone = !!isTurnDone || false;
 
@@ -359,6 +410,20 @@ class PlayerUnit extends BoardShape {
     );
     this.showMoveableArea();
     this.scene.game.events.emit("game.selectunit", { unit: this });
+  }
+
+  discover() {
+    let tileXYArray = this.pathFinder.findArea(this.discoverRangePoints);
+    console.log("unit discover", tileXYArray);
+    for (var i = 0, cnt = tileXYArray.length; i < cnt; i++) {
+      // do something with this tile
+      // if we want to add tiles we can do it here...
+      // but really that's not what we want is it? we want to subtract tiles.
+      // that is, there are tiles covering up what's already around us and we want to remove them?
+      // or... you change existing tiles? so that color/sprite appears to be undiscovered?
+    }
+
+    return this;
   }
 
   showMoveableArea() {
@@ -418,6 +483,24 @@ class PlayerUnit extends BoardShape {
     this.moveTo.moveTo(path.shift());
 
     return this;
+  }
+}
+
+class HiddenTile extends BoardShape {
+  constructor(unit, tileXY) {
+    //   console.log('MoveableTile constructor tileXY', tileXY);
+    var board = unit.rexChess.board;
+    var scene = board.scene;
+    // Shape(board, tileX, tileY, tileZ, fillColor, fillAlpha, addToBoard)
+    super(board, tileXY.x, tileXY.y, 999, 0x777d97);
+    scene.add.existing(this);
+    this.setScale(0.5);
+    this.tileXY = tileXY;
+    this.unit = unit;
+    this.events = unit.scene.game.events;
+
+    // on pointer down, move to this tile
+    this.on("board.pointerdown", this.onPointerDown.bind(this), this);
   }
 }
 
