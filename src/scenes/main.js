@@ -9,12 +9,12 @@ export default class MainScene extends Phaser.Scene {
   }
 
   preload() {
-    this.load.tilemapJSON("map", "assets/map.json");
-    this.load.spritesheet("sprites", "assets/sprites.png", {
-      // TODO: Change this later to correspond to the actual hexagon size.
-      frameWidth: 64,
-      frameHeight: 64
-    });
+    // this.load.tilemapJSON("map", "assets/map.json");
+    // this.load.spritesheet("sprites", "assets/sprites.png", {
+    //   // TODO: Change this later to correspond to the actual hexagon size.
+    //   frameWidth: 64,
+    //   frameHeight: 64
+    // });
   }
 
   _initializeNewGame() {
@@ -37,15 +37,29 @@ export default class MainScene extends Phaser.Scene {
       wax: 100
     };
 
+    // Hide it with cover up tiles
+    this.hiddenTiles = [];
+
+    let i;
+    let j;
+    for (i = 0; i < this.tileCountW; i++) {
+      this.hiddenTiles.push([]);
+      for (j = 0; j < this.tileCountH; j++) {
+        this.hiddenTiles[i][j] = new HiddenTile({
+          board: this.board,
+          tileXY: {
+            x: i,
+            y: j
+          }
+        });
+      }
+    }
+
     let centerCoords = this.board.getCenterCoordinates();
     let defaultPlayerUnitConfig = {
       board: this.board,
       movingPoints: 3,
-      discoverRangePoints: 15,
-      tileXY: {
-        x: centerCoords.x - 2,
-        y: centerCoords.y + 1
-      }
+      discoverRangePoints: 6
     };
 
     const getGodUnit = () =>
@@ -60,10 +74,31 @@ export default class MainScene extends Phaser.Scene {
       );
 
     this.units = [
-      getGodUnit(),
-      new PlayerUnit(defaultPlayerUnitConfig),
-      new PlayerUnit(defaultPlayerUnitConfig),
-      new PlayerUnit(defaultPlayerUnitConfig)
+      // getGodUnit(),
+      new PlayerUnit(
+        Object.assign({}, defaultPlayerUnitConfig, {
+          tileXY: {
+            x: centerCoords.x - 2,
+            y: centerCoords.y + 1
+          }
+        })
+      ),
+      new PlayerUnit(
+        Object.assign({}, defaultPlayerUnitConfig, {
+          tileXY: {
+            x: centerCoords.x - 1,
+            y: centerCoords.y - 1
+          }
+        })
+      ),
+      new PlayerUnit(
+        Object.assign({}, defaultPlayerUnitConfig, {
+          tileXY: {
+            x: centerCoords.x + 2,
+            y: centerCoords.y
+          }
+        })
+      )
     ];
 
     this.hive = [
@@ -101,6 +136,7 @@ export default class MainScene extends Phaser.Scene {
       return prob;
     };
 
+    // Place resources
     let iX;
     for (iX = 0; iX < centerCoords.x - 8; iX++) {
       placementProbability = place(placementProbability, iX);
@@ -234,7 +270,7 @@ export default class MainScene extends Phaser.Scene {
     // this.board.grid.x++;
     // this.cameras.main.scrollX++;
 
-    ///// Check if any player units are moving
+    /// Check if any player units are moving
     this.units.forEach(u => {
       if (u.moveTo.isRunning) {
         console.log("movement!");
@@ -270,6 +306,7 @@ class GameBoard extends Board {
     super(scene, config);
 
     // draw grid
+    // background 80dfff
     this.horizontalTileCount = config.width;
     this.verticalTileCount = config.height;
     this.graphics = scene.add.graphics({
@@ -278,7 +315,13 @@ class GameBoard extends Board {
         color: 0xffffff,
         alpha: 1
       }
+      // fillStyle: {
+      //   color: 0x80dfff,
+      //   alpha: 1
+      // }
     });
+
+    this.graphics.fillStyle(0x80dfff, 1.0);
     this.forEachTileXY((tileXY, board) => {
       var points = board.getGridPoints(tileXY.x, tileXY.y, true);
       this.graphics.strokePoints(points, true); // This draws the lines you see between the hexagons.
@@ -349,7 +392,7 @@ class Resource extends BoardShape {
       tileXY = board.getRandomEmptyTileXY(0);
     }
     // Shape(board, tileX, tileY, tileZ, fillColor, fillAlpha, addToBoard)
-    super(board, tileXY.x, tileXY.y, 1, 0x0000ff, 0.5);
+    super(board, tileXY.x, tileXY.y, 2, 0x0000ff, 0.5);
     scene.add.existing(this);
   }
 }
@@ -367,7 +410,7 @@ class PlayerUnit extends BoardShape {
       tileXY = board.getRandomEmptyTileXY(0);
     }
     // Shape(board, tileX, tileY, tileZ, fillColor, fillAlpha, addToBoard)
-    super(board, tileXY.x, tileXY.y, 0, 0x00cc00);
+    super(board, tileXY.x, tileXY.y, 6, 0x00cc00);
     this.scene = board.scene;
 
     this.scene.add.existing(this);
@@ -384,6 +427,9 @@ class PlayerUnit extends BoardShape {
     this.discoverRangePoints = discoverRangePoints;
     this.moveableTiles = [];
     this.isTurnDone = !!isTurnDone || false;
+
+    // some setup
+    this.discover();
 
     // events
     this.on("board.pointerdown", this.onPointerDown.bind(this), this);
@@ -416,6 +462,9 @@ class PlayerUnit extends BoardShape {
     let tileXYArray = this.pathFinder.findArea(this.discoverRangePoints);
     console.log("unit discover", tileXYArray);
     for (var i = 0, cnt = tileXYArray.length; i < cnt; i++) {
+      this.scene.hiddenTiles[tileXYArray[i].x][
+        tileXYArray[i].y
+      ].visible = false;
       // do something with this tile
       // if we want to add tiles we can do it here...
       // but really that's not what we want is it? we want to subtract tiles.
@@ -487,20 +536,15 @@ class PlayerUnit extends BoardShape {
 }
 
 class HiddenTile extends BoardShape {
-  constructor(unit, tileXY) {
-    //   console.log('MoveableTile constructor tileXY', tileXY);
-    var board = unit.rexChess.board;
+  constructor(options) {
+    let { board, tileXY } = options;
     var scene = board.scene;
+    if (tileXY === undefined) {
+      tileXY = board.getRandomEmptyTileXY(0);
+    }
     // Shape(board, tileX, tileY, tileZ, fillColor, fillAlpha, addToBoard)
-    super(board, tileXY.x, tileXY.y, 999, 0x777d97);
+    super(board, tileXY.x, tileXY.y, 4, 0x0000ff, 1);
     scene.add.existing(this);
-    this.setScale(0.5);
-    this.tileXY = tileXY;
-    this.unit = unit;
-    this.events = unit.scene.game.events;
-
-    // on pointer down, move to this tile
-    this.on("board.pointerdown", this.onPointerDown.bind(this), this);
   }
 }
 
@@ -510,7 +554,7 @@ class MoveableTile extends BoardShape {
     var board = unit.rexChess.board;
     var scene = board.scene;
     // Shape(board, tileX, tileY, tileZ, fillColor, fillAlpha, addToBoard)
-    super(board, tileXY.x, tileXY.y, -1, 0x330000);
+    super(board, tileXY.x, tileXY.y, 5, 0x330000);
     scene.add.existing(this);
     this.setScale(0.5);
     this.tileXY = tileXY;

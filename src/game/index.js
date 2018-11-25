@@ -21,7 +21,8 @@ let game = new Phaser.Game({
         mapping: "rexBoard"
       }
     ]
-  }
+  },
+  autoFocus: true
 });
 
 console.log("game", game);
