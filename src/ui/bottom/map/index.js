@@ -109,7 +109,10 @@ export default class UIMap extends Component {
     this.setState({
       uiViewport: {
         width: (actualViewport.width / actualMap.width) * uiMap.width,
-        height: (actualViewport.height / actualMap.height) * uiMap.height
+        height:
+          (actualViewport.height / actualMap.height) *
+          uiMap.height *
+          window.devicePixelRatio
       }
     });
   }
@@ -135,11 +138,11 @@ export default class UIMap extends Component {
 
   render() {
     console.log("#viewport");
-
+    let { style } = this.props;
     let { uiViewport } = this.state;
 
     return (
-      <section ref={ref => (this.mapRef = ref)} id="map">
+      <section style={style} ref={ref => (this.mapRef = ref)} id="map">
         <div
           ref={ref => (this.viewportRef = ref)}
           id="viewport"

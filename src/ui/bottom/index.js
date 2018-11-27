@@ -94,10 +94,13 @@ export default class UIBottom extends Component {
             <i class="fas fa-circle" /> Units
           </a>
         </nav>
-        {this.isActiveTab(tab.MAP) && (
-          <UIMap bottomUIHeight={this.getBottomHeight()} />
-        )}
-        {this.isActiveTab(tab.UNITS) && <UIUnit />}
+        <UIMap
+          bottomUIHeight={this.getBottomHeight()}
+          style={{ display: this.isActiveTab(tab.MAP) ? "block" : "none" }}
+        />
+        <UIUnit
+          style={{ display: this.isActiveTab(tab.UNITS) ? "block" : "none" }}
+        />
       </div>
     );
   }

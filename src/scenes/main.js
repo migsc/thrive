@@ -494,7 +494,11 @@ class PlayerUnit extends BoardShape {
 
   select() {
     this.scene.setActiveUnit(this);
-    this.scene.cameras.main.pan(this.x, this.y, 1000);
+    this.scene.cameras.main.pan(
+      this.x + window.innerWidth / 2,
+      this.y + window.innerHeight / 2,
+      1000
+    );
     this.showMoveableArea();
     this.scene.game.events.emit("game.selectunit", {
       unit: this,

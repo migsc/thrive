@@ -26,8 +26,10 @@ export default class UIUnit extends Component {
 
   render() {
     let { selectedUnit } = this.state;
+    let { style } = this.props;
+
     return (
-      <section id="unit">
+      <section style={style} id="unit">
         {selectedUnit && <h2>Moving points: {selectedUnit.movingPoints} </h2>}
       </section>
     );
