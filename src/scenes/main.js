@@ -1,6 +1,10 @@
 import Board from "plugins/board/board/Board";
 import BoardShape from "plugins/board/shape/Shape";
 
+import { differenceBy, flatten } from "lodash";
+
+const coordKeyExtractor = c => `${c.x}-${c.y}`;
+
 export default class MainScene extends Phaser.Scene {
   constructor() {
     super({
@@ -10,11 +14,11 @@ export default class MainScene extends Phaser.Scene {
 
   preload() {
     // this.load.tilemapJSON("map", "assets/map.json");
-    // this.load.spritesheet("sprites", "assets/sprites.png", {
-    //   // TODO: Change this later to correspond to the actual hexagon size.
-    //   frameWidth: 64,
-    //   frameHeight: 64
-    // });
+    this.load.spritesheet("honeybee", "assets/sprites/honeybee.png", {
+      // TODO: Change this later to correspond to the actual hexagon size.
+      frameWidth: 560,
+      frameHeight: 479
+    });
   }
 
   _initializeNewGame() {
@@ -39,6 +43,7 @@ export default class MainScene extends Phaser.Scene {
 
     // Hide it with cover up tiles
     this.hiddenTiles = [];
+    this.visibleTiles = [];
 
     let i;
     let j;
@@ -59,7 +64,7 @@ export default class MainScene extends Phaser.Scene {
     let defaultPlayerUnitConfig = {
       board: this.board,
       movingPoints: 3,
-      discoverRangePoints: 6
+      discoverRangePoints: 3
     };
 
     const getGodUnit = () =>
@@ -154,6 +159,7 @@ export default class MainScene extends Phaser.Scene {
     //
 
     this.activeUnit = this.units[0];
+    this.discoverTiles();
   }
 
   create() {
@@ -216,6 +222,7 @@ export default class MainScene extends Phaser.Scene {
     );
     this.game.events.on("unit.movedone", this.selectNextUnit, this);
 
+    this.add.sprite();
     // console.log(this.cameras.main);
   }
 
@@ -271,12 +278,9 @@ export default class MainScene extends Phaser.Scene {
     // this.cameras.main.scrollX++;
 
     /// Check if any player units are moving
-    this.units.forEach(u => {
-      if (u.moveTo.isRunning) {
-        console.log("movement!");
-        u.discover();
-      }
-    });
+    if (this.isAnyUnitMoving()) {
+      this.discoverTiles();
+    }
   }
 
   setActiveUnit(unit) {
@@ -284,6 +288,40 @@ export default class MainScene extends Phaser.Scene {
       u.hideMoveableArea();
     });
     this.activeUnit = unit;
+  }
+
+  isAnyUnitMoving() {
+    return this.units.reduce((out, u) => u.moveTo.isRunning || out, false);
+  }
+
+  getAllVisibleUnitTiles() {
+    return flatten(this.units.map(u => u.getVisibleCoords()));
+  }
+
+  discoverTiles() {
+    let latestVisibleTiles = this.getAllVisibleUnitTiles();
+
+    let tilesXYLeftBehind = differenceBy(
+      this.visibleTiles,
+      latestVisibleTiles,
+      coordKeyExtractor
+    );
+
+    let tilesXYNewlyDiscovered = differenceBy(
+      latestVisibleTiles,
+      this.visibleTiles,
+      coordKeyExtractor
+    );
+
+    tilesXYLeftBehind.forEach(coord => {
+      this.hiddenTiles[coord.x][coord.y].visible = true;
+    });
+
+    tilesXYNewlyDiscovered.forEach(coord => {
+      this.hiddenTiles[coord.x][coord.y].visible = false;
+    });
+
+    this.visibleTiles = latestVisibleTiles;
   }
 }
 
@@ -425,11 +463,10 @@ class PlayerUnit extends BoardShape {
     // private members
     this.initialMovingPoints = this.movingPoints = movingPoints || 4;
     this.discoverRangePoints = discoverRangePoints;
+    this._discoverRangeMap = {};
     this.moveableTiles = [];
+    this._hasInteracted = false;
     this.isTurnDone = !!isTurnDone || false;
-
-    // some setup
-    this.discover();
 
     // events
     this.on("board.pointerdown", this.onPointerDown.bind(this), this);
@@ -449,30 +486,13 @@ class PlayerUnit extends BoardShape {
 
   select() {
     this.scene.setActiveUnit(this);
-    this.scene.cameras.main.pan(
-      this.x + this.scene.getWidth() / 2,
-      this.y + this.scene.getHeight() / 2,
-      1000
-    );
+    this.scene.cameras.main.pan(this.x, this.y, 1000);
     this.showMoveableArea();
     this.scene.game.events.emit("game.selectunit", { unit: this });
   }
 
-  discover() {
-    let tileXYArray = this.pathFinder.findArea(this.discoverRangePoints);
-    console.log("unit discover", tileXYArray);
-    for (var i = 0, cnt = tileXYArray.length; i < cnt; i++) {
-      this.scene.hiddenTiles[tileXYArray[i].x][
-        tileXYArray[i].y
-      ].visible = false;
-      // do something with this tile
-      // if we want to add tiles we can do it here...
-      // but really that's not what we want is it? we want to subtract tiles.
-      // that is, there are tiles covering up what's already around us and we want to remove them?
-      // or... you change existing tiles? so that color/sprite appears to be undiscovered?
-    }
-
-    return this;
+  getVisibleCoords() {
+    return this.pathFinder.findArea(this.discoverRangePoints);
   }
 
   showMoveableArea() {
