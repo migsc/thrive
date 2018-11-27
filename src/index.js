@@ -1,4 +1,5 @@
 import "bootstrap";
+import "webpack-jquery-ui/draggable";
 
 import { h, render, Component } from "preact";
 /** @jsx h */

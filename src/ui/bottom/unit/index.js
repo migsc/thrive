@@ -12,14 +12,24 @@ export default class UIUnit extends Component {
     };
   }
 
-  // This isn't being served yet
+  componentDidMount() {
+    game.events.on("game.selectunit", this.onUnitSelected.bind(this));
+  }
+
+  onUnitSelected(e) {
+    let { unit } = e;
+    console.log(unit);
+    this.setState({
+      selectedUnit: unit
+    });
+  }
 
   render() {
     let { selectedUnit } = this.state;
     return (
-      <div id="unit">
+      <section id="unit">
         {selectedUnit && <h2>Moving points: {selectedUnit.movingPoints} </h2>}
-      </div>
+      </section>
     );
   }
 }

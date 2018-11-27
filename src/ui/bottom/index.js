@@ -5,25 +5,30 @@ import "./styles.scss";
 import game from "../../game";
 
 import UIUnit from "./unit";
+import UIMap from "./map";
+
+const tab = {
+  MAP: "map",
+  UNITS: "units"
+};
 
 export default class UIBottom extends Component {
   constructor() {
     super();
     this.state = {
+      activeTab: tab.MAP,
       activeTile: {
         x: "?",
         y: "?"
       },
       turn: "?",
-      shouldShowMoveable: true,
-      selectedUnit: null
+      shouldShowMoveable: true
     };
   }
 
   componentDidMount() {
     game.events.on("tile.moved", this.handleTileMoved.bind(this));
     game.events.on("game.roundstart", this.onRoundStarted.bind(this));
-    game.events.on("game.selectunit", this.onUnitSelected.bind(this));
   }
 
   handleTileMoved(e) {
@@ -53,53 +58,46 @@ export default class UIBottom extends Component {
     });
   }
 
-  onUnitSelected(e) {
-    let { unit } = e;
-    console.log(unit);
+  isActiveTab(tab) {
+    let { activeTab } = this.state;
+    return tab === activeTab;
+  }
+
+  setActiveTab(tab) {
     this.setState({
-      selectedUnit: unit
+      activeTab: tab
     });
   }
 
+  getBottomHeight() {
+    if (this.bottomRef) return this.bottomRef.clientHeight;
+    return 0;
+  }
+
   render() {
-    let {
-      activeTile,
-      currentRound,
-      shouldShowMoveable,
-      selectedUnit
-    } = this.state;
+    let { activeTab } = this.state;
     return (
-      <div id="bottom">
-        <div id="debug">
-          <h2>
-            Active tile - x:{activeTile.x}, y:{activeTile.y}
-          </h2>
-          <h2>Round: {currentRound}</h2>
-          <h2>
-            {shouldShowMoveable ? (
-              <button
-                onClick={this.onHideMoveable.bind(this)}
-                id="#down"
-                type="button"
-                class="btn btn-outline-warning"
-              >
-                Hide moveable area
-                <i class="fas fa-stroopwafel" />
-              </button>
-            ) : (
-              <button
-                onClick={this.onShowMoveable.bind(this)}
-                id="#down"
-                type="button"
-                class="btn btn-outline-warning"
-              >
-                Show moveable area
-                <i class="fas fa-stroopwafel" />
-              </button>
-            )}
-          </h2>
-        </div>
-        {selectedUnit && <UIUnit unit={selectedUnit} />}
+      <div ref={ref => (this.bottomRef = ref)} id="bottom">
+        <nav class="nav">
+          <a
+            class={`nav-link ${this.isActiveTab(tab.MAP) ? "active" : ""}`}
+            href="#"
+            onClick={() => this.setActiveTab(tab.MAP)}
+          >
+            <i class="fas fa-circle" /> Map
+          </a>
+          <a
+            class={`nav-link ${this.isActiveTab(tab.UNITS) ? "active" : ""}`}
+            href="#"
+            onClick={() => this.setActiveTab(tab.UNITS)}
+          >
+            <i class="fas fa-circle" /> Units
+          </a>
+        </nav>
+        {this.isActiveTab(tab.MAP) && (
+          <UIMap bottomUIHeight={this.getBottomHeight()} />
+        )}
+        {this.isActiveTab(tab.UNITS) && <UIUnit />}
       </div>
     );
   }

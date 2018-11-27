@@ -185,6 +185,9 @@ export default class MainScene extends Phaser.Scene {
       speed: 0.5
     });
 
+    // Manually calculated for 300x20 tiles
+    this.mapBounds = { width: 20000, height: 3000 };
+
     this.cameras.main.setBounds(
       0,
       0,
@@ -194,12 +197,9 @@ export default class MainScene extends Phaser.Scene {
       // this.tileCountW * this.tileSize * window.devicePixelRatio,
 
       // this.tileCountH * this.tileSize * window.devicePixelRatio
-
-      // Manually calculated for 300x20 tiles
-      20000,
-      3000
+      this.mapBounds.width,
+      this.mapBounds.height
     );
-    // this.cameras.main.setBounds(0, 0, 30000, 5000);
 
     this.lastMovedToTile = {
       x: 0,
@@ -209,6 +209,7 @@ export default class MainScene extends Phaser.Scene {
     this.activeUnit.select();
 
     this.game.events.emit("game.roundstart", { round: this.round });
+    this.game.events.emit("game.mapupdate", { map: this.mapBounds });
 
     this.game.events.on(
       "ui.showmoveable",
@@ -221,6 +222,7 @@ export default class MainScene extends Phaser.Scene {
       this.activeUnit
     );
     this.game.events.on("unit.movedone", this.selectNextUnit, this);
+    this.game.events.on("ui.viewportdragged", this.updateViewport, this);
 
     this.add.sprite();
     // console.log(this.cameras.main);
@@ -281,6 +283,12 @@ export default class MainScene extends Phaser.Scene {
     if (this.isAnyUnitMoving()) {
       this.discoverTiles();
     }
+  }
+
+  updateViewport(e) {
+    let { position } = e;
+    console.log("updateViewport", position);
+    this.cameras.main.setScroll(position.x, position.y);
   }
 
   setActiveUnit(unit) {
@@ -488,7 +496,10 @@ class PlayerUnit extends BoardShape {
     this.scene.setActiveUnit(this);
     this.scene.cameras.main.pan(this.x, this.y, 1000);
     this.showMoveableArea();
-    this.scene.game.events.emit("game.selectunit", { unit: this });
+    this.scene.game.events.emit("game.selectunit", {
+      unit: this,
+      position: { x: this.x, y: this.y }
+    });
   }
 
   getVisibleCoords() {
