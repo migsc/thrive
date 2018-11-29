@@ -1,10 +1,9 @@
 import { h, render, Component } from "preact";
 /** @jsx h */
 
-import "./styles.scss";
 import "react";
 import Draggable from "react-draggable";
-import game from "../../../game";
+import game from "../game";
 
 const viewportSelector = "#viewport";
 

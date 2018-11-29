@@ -1,8 +1,7 @@
 import { h, render, Component } from "preact";
 /** @jsx h */
 
-import "./styles.scss";
-import game from "../../game";
+import game from "../game";
 
 import UIUnit from "./unit";
 import UIMap from "./map";

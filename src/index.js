@@ -1,4 +1,5 @@
-import "bootstrap";
+// import "bootstrap";
+import "nes.css/css/nes.min.css";
 import "webpack-jquery-ui/draggable";
 
 import { h, render, Component } from "preact";
@@ -11,7 +12,6 @@ import game from "game";
 import BottomUI from "./ui/bottom";
 
 import "styles/index.scss";
-import "ui/styles.scss";
 
 class App extends Component {
   constructor() {
