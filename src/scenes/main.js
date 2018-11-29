@@ -82,6 +82,7 @@ export default class MainScene extends Phaser.Scene {
       // getGodUnit(),
       new PlayerUnit(
         Object.assign({}, defaultPlayerUnitConfig, {
+          name: "",
           tileXY: {
             x: centerCoords.x - 2,
             y: centerCoords.y + 1

@@ -3,7 +3,7 @@ import { h, render, Component } from "preact";
 
 import game from "../game";
 
-export default class UIUnit extends Component {
+export default class UIUnits extends Component {
   constructor() {
     super();
     this.state = {
@@ -28,8 +28,17 @@ export default class UIUnit extends Component {
     let { style } = this.props;
 
     return (
-      <section style={style} id="unit">
-        {selectedUnit && <h2>Moving points: {selectedUnit.movingPoints} </h2>}
+      <section style={style} id="units">
+        <div id="collection" class="container is-dark">
+          <p>...</p>
+        </div>
+        <div id="individual" class="container is-dark">
+          <p>...</p>
+          {selectedUnit && <p>Moving points: {selectedUnit.movingPoints} </p>}
+        </div>
+        <div id="actions" class="container is-dark with-title">
+          <label class="title">Actions</label>
+        </div>
       </section>
     );
   }

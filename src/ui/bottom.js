@@ -3,7 +3,7 @@ import { h, render, Component } from "preact";
 
 import game from "../game";
 
-import UIUnit from "./unit";
+import UIUnits from "./units";
 import UIMap from "./map";
 
 const tab = {
@@ -28,6 +28,7 @@ export default class UIBottom extends Component {
   componentDidMount() {
     game.events.on("tile.moved", this.handleTileMoved.bind(this));
     game.events.on("game.roundstart", this.onRoundStarted.bind(this));
+    game.events.on("game.selectunit", this.onUnitSelected.bind(this));
   }
 
   handleTileMoved(e) {
@@ -57,6 +58,12 @@ export default class UIBottom extends Component {
     });
   }
 
+  onUnitSelected() {
+    this.setState({
+      activeTab: tab.UNITS
+    });
+  }
+
   isActiveTab(tab) {
     let { activeTab } = this.state;
     return tab === activeTab;
@@ -78,27 +85,28 @@ export default class UIBottom extends Component {
     return (
       <div ref={ref => (this.bottomRef = ref)} id="bottom">
         <nav class="nav">
-          <a
-            class={`nav-link ${this.isActiveTab(tab.MAP) ? "active" : ""}`}
-            href="#"
+          <button
+            type="button"
+            class={`btn ${this.isActiveTab(tab.MAP) ? "active" : ""}`}
             onClick={() => this.setActiveTab(tab.MAP)}
           >
-            <i class="fas fa-circle" /> Map
-          </a>
-          <a
-            class={`nav-link ${this.isActiveTab(tab.UNITS) ? "active" : ""}`}
-            href="#"
+            Map
+          </button>
+
+          <button
+            type="button"
+            class={`btn ${this.isActiveTab(tab.UNITS) ? "active" : ""}`}
             onClick={() => this.setActiveTab(tab.UNITS)}
           >
-            <i class="fas fa-circle" /> Units
-          </a>
+            Units
+          </button>
         </nav>
         <UIMap
           bottomUIHeight={this.getBottomHeight()}
           style={{ display: this.isActiveTab(tab.MAP) ? "block" : "none" }}
         />
-        <UIUnit
-          style={{ display: this.isActiveTab(tab.UNITS) ? "block" : "none" }}
+        <UIUnits
+          style={{ display: this.isActiveTab(tab.UNITS) ? "flex" : "none" }}
         />
       </div>
     );

@@ -10,12 +10,12 @@ body {
 
     #bottom {
       pointer-events: all;
-      height: 25%;
-      max-height: 200px;
+      height: 30%;
+      max-height: 250px;
       min-height: 100px;
       width: 100%;
-      background-color: #000;
-      color: #fff;
+      //   background-color: #212529;
+      //   color: #fff;
       position: absolute;
       bottom: 0;
       flex-direction: "row";
@@ -25,11 +25,16 @@ body {
       }
 
       nav {
-        height: 20%;
+        height: 25%;
+
+        .btn.active {
+          background-color: #e7e7e7;
+          box-shadow: inset -6px -6px #adafbc;
+        }
       }
 
       section {
-        height: 80%;
+        height: 75%;
       }
     }
   }
@@ -46,5 +51,21 @@ body {
   }
 
   // UI Units
-  //....
+
+  #units {
+    display: flex;
+
+    .container {
+      flex: 1;
+    }
+
+    #collection {
+    }
+
+    #individual {
+    }
+
+    #actions {
+    }
+  }
 }

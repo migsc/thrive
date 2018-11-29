@@ -1,4 +1,3 @@
-// import "bootstrap";
 import "nes.css/css/nes.min.css";
 import "webpack-jquery-ui/draggable";
 
