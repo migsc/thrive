@@ -498,7 +498,7 @@ class PlayerUnit extends BoardShape {
     });
 
     // private members
-    this.initialMovingPoints = this.movingPoints = movingPoints || 4;
+    this.maxMovingPoints = this.movingPoints = movingPoints || 4;
     this.discoverRangePoints = discoverRangePoints;
     this._discoverRangeMap = {};
     this.moveableTiles = [];
@@ -514,7 +514,7 @@ class PlayerUnit extends BoardShape {
   }
 
   resetMovingPoints() {
-    this.movingPoints = this.initialMovingPoints;
+    this.movingPoints = this.maxMovingPoints;
   }
 
   canAct() {
