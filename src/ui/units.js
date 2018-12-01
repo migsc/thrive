@@ -7,30 +7,45 @@ export default class UIUnits extends Component {
   constructor() {
     super();
     this.state = {
-      selectedUnit: null
+      selectedUnit: null,
+      unitsByName: {}
     };
   }
 
   componentDidMount() {
     game.events.on("game.selectunit", this.onUnitSelected.bind(this));
+    game.events.on("game.unitsupdate", this.onUnitListReceived.bind(this));
   }
 
-  onUnitSelected(e) {
-    let { unit } = e;
+  onUnitSelected({ unit }) {
     console.log(unit);
     this.setState({
       selectedUnit: unit
     });
   }
 
+  onUnitListReceived({ units }) {
+    console.log("onUnitListReceived", units);
+    this.setState({
+      unitsByName: units.reduce((map, u) => {
+        map[u.name] = u;
+        return map;
+      }, {})
+    });
+  }
+
   render() {
-    let { selectedUnit } = this.state;
+    let { selectedUnit, unitsByName } = this.state;
     let { style } = this.props;
+
+    console.log("unitsByName", unitsByName);
 
     return (
       <section style={style} id="units">
         <div id="collection" class="container is-dark">
-          <p>...</p>
+          {Object.values(unitsByName).map(u => (
+            <p>{u.name}</p>
+          ))}
         </div>
         <div id="individual" class="container is-dark">
           <p>...</p>

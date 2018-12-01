@@ -90,7 +90,7 @@ export default class UIBottom extends Component {
             class={`btn ${this.isActiveTab(tab.MAP) ? "active" : ""}`}
             onClick={() => this.setActiveTab(tab.MAP)}
           >
-            Map
+            MAP
           </button>
 
           <button
@@ -98,7 +98,7 @@ export default class UIBottom extends Component {
             class={`btn ${this.isActiveTab(tab.UNITS) ? "active" : ""}`}
             onClick={() => this.setActiveTab(tab.UNITS)}
           >
-            Units
+            UNITS
           </button>
         </nav>
         <UIMap

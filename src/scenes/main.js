@@ -2,6 +2,8 @@ import Board from "plugins/board/board/Board";
 import BoardShape from "plugins/board/shape/Shape";
 
 import { differenceBy, flatten } from "lodash";
+import { getUUID } from "../lib/utils";
+import { names } from "../lib/constants";
 
 const coordKeyExtractor = c => `${c.x}-${c.y}`;
 
@@ -26,6 +28,7 @@ export default class MainScene extends Phaser.Scene {
     this.tileCountW = 300;
     this.tileCountH = 20;
     this.tileSize = 40;
+    this.nameIndex = -1;
 
     this.board = new GameBoard(this, {
       grid: getHexagonGrid(this, this.tileSize),
@@ -70,6 +73,7 @@ export default class MainScene extends Phaser.Scene {
     const getGodUnit = () =>
       new PlayerUnit(
         Object.assign({}, defaultPlayerUnitConfig, {
+          name: "God",
           movingPoints: 999,
           tileXY: {
             x: 0,
@@ -82,7 +86,7 @@ export default class MainScene extends Phaser.Scene {
       // getGodUnit(),
       new PlayerUnit(
         Object.assign({}, defaultPlayerUnitConfig, {
-          name: "",
+          name: names[++this.nameIndex],
           tileXY: {
             x: centerCoords.x - 2,
             y: centerCoords.y + 1
@@ -91,6 +95,7 @@ export default class MainScene extends Phaser.Scene {
       ),
       new PlayerUnit(
         Object.assign({}, defaultPlayerUnitConfig, {
+          name: names[++this.nameIndex],
           tileXY: {
             x: centerCoords.x - 1,
             y: centerCoords.y - 1
@@ -99,6 +104,7 @@ export default class MainScene extends Phaser.Scene {
       ),
       new PlayerUnit(
         Object.assign({}, defaultPlayerUnitConfig, {
+          name: names[++this.nameIndex],
           tileXY: {
             x: centerCoords.x + 2,
             y: centerCoords.y
@@ -211,6 +217,7 @@ export default class MainScene extends Phaser.Scene {
 
     this.game.events.emit("game.roundstart", { round: this.round });
     this.game.events.emit("game.mapupdate", { map: this.mapBounds });
+    this.game.events.emit("game.unitsupdate", { units: this.units });
 
     this.game.events.on(
       "ui.showmoveable",
@@ -451,7 +458,9 @@ class PlayerUnit extends BoardShape {
       tileXY,
       movingPoints,
       discoverRangePoints,
-      isTurnDone
+      isTurnDone,
+      name,
+      key
     } = options;
     if (tileXY === undefined) {
       tileXY = board.getRandomEmptyTileXY(0);
@@ -459,7 +468,8 @@ class PlayerUnit extends BoardShape {
     // Shape(board, tileX, tileY, tileZ, fillColor, fillAlpha, addToBoard)
     super(board, tileXY.x, tileXY.y, 6, 0x00cc00);
     this.scene = board.scene;
-
+    this.name = name;
+    this.key = key || name || getUUID();
     this.scene.add.existing(this);
     this.setDepth(1);
 
