@@ -141,7 +141,12 @@ export default class UIMap extends Component {
     let { uiViewport } = this.state;
 
     return (
-      <section style={style} ref={ref => (this.mapRef = ref)} id="map">
+      <section
+        style={style}
+        ref={ref => (this.mapRef = ref)}
+        id="map"
+        class="tab-content"
+      >
         <div
           ref={ref => (this.viewportRef = ref)}
           id="viewport"

@@ -25,7 +25,7 @@ export default class MainScene extends Phaser.Scene {
 
   _initializeNewGame() {
     // create board
-    this.tileCountW = 300;
+    this.tileCountW = 20;
     this.tileCountH = 20;
     this.tileSize = 40;
     this.nameIndex = -1;
@@ -108,6 +108,24 @@ export default class MainScene extends Phaser.Scene {
           tileXY: {
             x: centerCoords.x + 2,
             y: centerCoords.y
+          }
+        })
+      ),
+      new PlayerUnit(
+        Object.assign({}, defaultPlayerUnitConfig, {
+          name: names[++this.nameIndex],
+          tileXY: {
+            x: centerCoords.x - 3,
+            y: centerCoords.y + 2
+          }
+        })
+      ),
+      new PlayerUnit(
+        Object.assign({}, defaultPlayerUnitConfig, {
+          name: names[++this.nameIndex],
+          tileXY: {
+            x: centerCoords.x - 2,
+            y: centerCoords.y - 2
           }
         })
       )
@@ -468,7 +486,7 @@ class PlayerUnit extends BoardShape {
     // Shape(board, tileX, tileY, tileZ, fillColor, fillAlpha, addToBoard)
     super(board, tileXY.x, tileXY.y, 6, 0x00cc00);
     this.scene = board.scene;
-    this.name = name;
+    this.name = name.toUpperCase();
     this.key = key || name || getUUID();
     this.scene.add.existing(this);
     this.setDepth(1);

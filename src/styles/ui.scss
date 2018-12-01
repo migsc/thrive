@@ -36,6 +36,10 @@ body {
       section {
         height: 75%;
       }
+
+      section.tab-content {
+        color: #fff;
+      }
     }
   }
 
@@ -60,6 +64,25 @@ body {
     }
 
     #collection {
+      overflow-y: hidden;
+      padding-bottom: 8;
+
+      .scroll-container {
+        overflow-y: scroll;
+        height: 100%;
+      }
+
+      .item.selected {
+        font-weight: "bold";
+      }
+
+      .item::before {
+        content: "-  ";
+      }
+
+      .item.selected::before {
+        content: "> ";
+      }
     }
 
     #individual {
