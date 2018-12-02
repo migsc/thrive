@@ -3,7 +3,7 @@ import BoardShape from "plugins/board/shape/Shape";
 
 import { differenceBy, flatten } from "lodash";
 import { getUUID } from "../lib/utils";
-import { names } from "../lib/constants";
+import { PLAYER_UNIT, ACTION } from "../lib/constants";
 
 const coordKeyExtractor = c => `${c.x}-${c.y}`;
 
@@ -87,7 +87,7 @@ export default class MainScene extends Phaser.Scene {
       // getGodUnit(),
       new PlayerUnit(
         Object.assign({}, defaultPlayerUnitConfig, {
-          name: names[++this.nameIndex],
+          name: PLAYER_UNIT.NAMES[++this.nameIndex],
           tileXY: {
             x: centerCoords.x - 2,
             y: centerCoords.y + 1
@@ -96,7 +96,7 @@ export default class MainScene extends Phaser.Scene {
       ),
       new PlayerUnit(
         Object.assign({}, defaultPlayerUnitConfig, {
-          name: names[++this.nameIndex],
+          name: PLAYER_UNIT.NAMES[++this.nameIndex],
           tileXY: {
             x: centerCoords.x - 1,
             y: centerCoords.y - 1
@@ -105,7 +105,7 @@ export default class MainScene extends Phaser.Scene {
       ),
       new PlayerUnit(
         Object.assign({}, defaultPlayerUnitConfig, {
-          name: names[++this.nameIndex],
+          name: PLAYER_UNIT.NAMES[++this.nameIndex],
           tileXY: {
             x: centerCoords.x + 2,
             y: centerCoords.y
@@ -114,7 +114,7 @@ export default class MainScene extends Phaser.Scene {
       ),
       new PlayerUnit(
         Object.assign({}, defaultPlayerUnitConfig, {
-          name: names[++this.nameIndex],
+          name: PLAYER_UNIT.NAMES[++this.nameIndex],
           tileXY: {
             x: centerCoords.x - 3,
             y: centerCoords.y + 2
@@ -123,7 +123,7 @@ export default class MainScene extends Phaser.Scene {
       ),
       new PlayerUnit(
         Object.assign({}, defaultPlayerUnitConfig, {
-          name: names[++this.nameIndex],
+          name: PLAYER_UNIT.NAMES[++this.nameIndex],
           tileXY: {
             x: centerCoords.x - 2,
             y: centerCoords.y - 2
@@ -252,12 +252,18 @@ export default class MainScene extends Phaser.Scene {
     this.game.events.on("ui.viewportdragged", this.updateViewport, this);
 
     this.game.events.on("unit.movedone", this.selectNextUnit, this);
+    this.game.events.on(
+      "ui.actionselected",
+      this.activeUnit.selectAction,
+      this.activeUnit
+    );
 
     this.add.sprite();
     // console.log(this.cameras.main);
   }
 
   unitWasSelected({ unit }) {
+    this.setActiveUnit(unit);
     unit.select(false);
   }
 
@@ -485,7 +491,8 @@ class PlayerUnit extends BoardShape {
       discoverRangePoints,
       isTurnDone,
       name,
-      key
+      key,
+      hitPoints
     } = options;
     if (tileXY === undefined) {
       tileXY = board.getRandomEmptyTileXY(0);
@@ -505,6 +512,7 @@ class PlayerUnit extends BoardShape {
     });
 
     // private members
+    this.maxHitPoints = this.hitPoints = hitPoints;
     this.maxMovingPoints = this.movingPoints = movingPoints || 4;
     this.discoverRangePoints = discoverRangePoints;
     this._discoverRangeMap = {};
@@ -524,8 +532,84 @@ class PlayerUnit extends BoardShape {
     this.movingPoints = this.maxMovingPoints;
   }
 
+  getAvailableActions() {
+    let actions = [];
+
+    if (this.canMove()) {
+      actions.push(ACTION.MOVE);
+    }
+
+    if (this.canBuild()) {
+      actions.push(ACTION.BUILD);
+    }
+
+    if (this.canFarm()) {
+      actions.push(ACTION.FARM);
+    }
+
+    if (this.canAttack()) {
+      actions.push(ACTION.ATTACK);
+    }
+    console.log("getAvailableActions", actions);
+    return actions;
+  }
+
   canAct() {
+    return (
+      this.canMove() || this.canBuild() || this.canFarm() || this.canAttack()
+    );
+  }
+
+  canMove() {
     return this.movingPoints > 0;
+  }
+
+  canBuild() {
+    return false;
+  }
+
+  canFarm() {
+    return false;
+  }
+
+  canAttack() {
+    return false;
+  }
+
+  selectAction({ action }) {
+    switch (action) {
+      case ACTION.MOVE:
+        this.selectMoveAction();
+        return;
+      case ACTION.BUILD:
+        this.selectBuildAction();
+        return;
+      case ACTION.FARM:
+        this.selectFarmAction();
+        return;
+      case ACTION.ATTACK:
+        this.selectAttackAction();
+        return;
+    }
+  }
+
+  selectMoveAction() {
+    this.showMoveableArea();
+  }
+
+  selectBuildAction() {}
+
+  selectFarmAction() {}
+
+  selectAttackAction() {}
+
+  equals(other) {
+    if (!other) return false;
+    return this.key === other.key;
+  }
+
+  isSelected() {
+    return this.equals(this.scene.activeUnit);
   }
 
   select(shouldEmit = true) {
@@ -535,7 +619,6 @@ class PlayerUnit extends BoardShape {
       this.y + window.innerHeight / 2,
       1000
     );
-    this.showMoveableArea();
 
     if (shouldEmit) {
       this.scene.game.events.emit("game.selectunit", {

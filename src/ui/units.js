@@ -2,12 +2,14 @@ import { h, render, Component } from "preact";
 /** @jsx h */
 
 import game from "../game";
+import { ACTION } from "../lib/constants";
 
 export default class UIUnits extends Component {
   constructor() {
     super();
     this.state = {
       selectedUnit: null,
+      selectedAction: "",
       unitsByName: {}
     };
     this.unitListItemRefMap = {};
@@ -20,7 +22,8 @@ export default class UIUnits extends Component {
 
   _onUnitSelected({ unit }) {
     this.setState({
-      selectedUnit: unit
+      selectedUnit: unit,
+      selectedAction: ""
     });
     this._scrollToUnitInCollection(unit);
   }
@@ -42,6 +45,18 @@ export default class UIUnits extends Component {
         return map;
       }, {})
     });
+  }
+
+  onActionSelected(actionName) {
+    this.setState({
+      selectedAction: actionName
+    });
+    game.events.emit("ui.actionselected", { action: actionName });
+  }
+
+  _isActionSelected(actionName) {
+    let { selectedAction } = this.state;
+    return actionName === selectedAction;
   }
 
   _scrollToUnitInCollection(unit) {
@@ -74,14 +89,13 @@ export default class UIUnits extends Component {
           >
             <ul>
               {Object.values(unitsByName).map(u => (
-                <li>
+                <li class={this._isUnitSelected(u) ? "item selected" : "item"}>
                   <a
                     href="#"
                     onclick={() => this.onUnitSelectedFromUI({ unit: u })}
                     ref={ref => {
                       this.unitListItemRefMap[u.key] = ref;
                     }}
-                    class={this._isUnitSelected(u) ? "item selected" : "item"}
                   >
                     {" "}
                     {u.name}
@@ -91,10 +105,16 @@ export default class UIUnits extends Component {
             </ul>
           </div>
         </div>
-        <div id="individual" class="container is-dark">
+        <div id="individual" class="container is-dark with-title">
+          <label class="title ellipsis">
+            {selectedUnit && `${selectedUnit.name} SWARM`}
+          </label>
+
           {selectedUnit && (
             <div>
-              <p>{selectedUnit.name} SWARM</p>
+              <p>
+                HP: {selectedUnit.hitPoints}/{selectedUnit.maxHitPoints}
+              </p>
               <p>
                 MP: {selectedUnit.movingPoints}/{selectedUnit.maxMovingPoints}
               </p>
@@ -103,7 +123,23 @@ export default class UIUnits extends Component {
         </div>
         <div id="actions" class="container is-dark with-title">
           <label class="title">ACTIONS</label>
-          <p> MOVE</p>
+          {selectedUnit && selectedUnit.canAct() && (
+            <ul>
+              {selectedUnit.getAvailableActions().map(actionName => (
+                <label>
+                  <a href="#" onclick={() => this.onActionSelected(actionName)}>
+                    <input
+                      type="radio"
+                      class="radio"
+                      name="action"
+                      checked={this._isActionSelected(actionName)}
+                    />
+                    <span>{actionName.toUpperCase()}</span>
+                  </a>
+                </label>
+              ))}
+            </ul>
+          )}
         </div>
       </section>
     );
