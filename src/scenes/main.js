@@ -252,11 +252,7 @@ export default class MainScene extends Phaser.Scene {
     this.game.events.on("ui.viewportdragged", this.updateViewport, this);
 
     this.game.events.on("unit.movedone", this.selectNextUnit, this);
-    this.game.events.on(
-      "ui.actionselected",
-      this.activeUnit.selectAction,
-      this.activeUnit
-    );
+    this.game.events.on("ui.actionselected", this.onActionSelected, this);
 
     this.add.sprite();
     // console.log(this.cameras.main);
@@ -265,6 +261,10 @@ export default class MainScene extends Phaser.Scene {
   unitWasSelected({ unit }) {
     this.setActiveUnit(unit);
     unit.select(false);
+  }
+
+  onActionSelected(event) {
+    this.activeUnit.selectAction(event);
   }
 
   selectNextUnit() {
