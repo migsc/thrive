@@ -14,16 +14,24 @@ export default class UIUnits extends Component {
   }
 
   componentDidMount() {
-    game.events.on("game.selectunit", this.onUnitSelected.bind(this));
+    game.events.on("game.selectunit", this.onUnitSelectedFromGame.bind(this));
     game.events.on("game.unitsupdate", this.onUnitListReceived.bind(this));
   }
 
-  onUnitSelected({ unit }) {
-    console.log(unit);
+  _onUnitSelected({ unit }) {
     this.setState({
       selectedUnit: unit
     });
     this._scrollToUnitInCollection(unit);
+  }
+
+  onUnitSelectedFromGame({ unit }) {
+    this._onUnitSelected({ unit });
+  }
+
+  onUnitSelectedFromUI({ unit }) {
+    this._onUnitSelected({ unit });
+    game.events.emit("ui.selectunit", { unit });
   }
 
   onUnitListReceived({ units }) {
@@ -69,7 +77,7 @@ export default class UIUnits extends Component {
                 <li>
                   <a
                     href="#"
-                    onclick={() => this.onUnitSelected({ unit: u })}
+                    onclick={() => this.onUnitSelectedFromUI({ unit: u })}
                     ref={ref => {
                       this.unitListItemRefMap[u.key] = ref;
                     }}

@@ -67,6 +67,7 @@ export default class MainScene extends Phaser.Scene {
     let defaultPlayerUnitConfig = {
       board: this.board,
       movingPoints: 3,
+      hitPoints: 2,
       discoverRangePoints: 3
     };
 
@@ -247,11 +248,17 @@ export default class MainScene extends Phaser.Scene {
       this.activeUnit.hideMoveableArea,
       this.activeUnit
     );
-    this.game.events.on("unit.movedone", this.selectNextUnit, this);
+    this.game.events.on("ui.selectunit", this.unitWasSelected, this);
     this.game.events.on("ui.viewportdragged", this.updateViewport, this);
+
+    this.game.events.on("unit.movedone", this.selectNextUnit, this);
 
     this.add.sprite();
     // console.log(this.cameras.main);
+  }
+
+  unitWasSelected({ unit }) {
+    unit.select(false);
   }
 
   selectNextUnit() {
@@ -521,7 +528,7 @@ class PlayerUnit extends BoardShape {
     return this.movingPoints > 0;
   }
 
-  select() {
+  select(shouldEmit = true) {
     this.scene.setActiveUnit(this);
     this.scene.cameras.main.pan(
       this.x + window.innerWidth / 2,
@@ -529,10 +536,13 @@ class PlayerUnit extends BoardShape {
       1000
     );
     this.showMoveableArea();
-    this.scene.game.events.emit("game.selectunit", {
-      unit: this,
-      position: { x: this.x, y: this.y }
-    });
+
+    if (shouldEmit) {
+      this.scene.game.events.emit("game.selectunit", {
+        unit: this,
+        position: { x: this.x, y: this.y }
+      });
+    }
   }
 
   getVisibleCoords() {
