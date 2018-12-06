@@ -1,7 +1,7 @@
 import Board from "plugins/board/board/Board";
 import BoardShape from "plugins/board/shape/Shape";
 
-import { differenceBy, flatten, without, uniqBy } from "lodash";
+import { differenceBy, flatten, without, uniqBy, intersectionBy } from "lodash";
 import { getUUID } from "../lib/utils";
 import { PLAYER_UNIT, ACTION, ROOM, RESOURCE } from "../lib/constants";
 
@@ -74,6 +74,7 @@ export default class MainScene extends Phaser.Scene {
     const getGodUnit = () =>
       new PlayerUnit(
         Object.assign({}, defaultPlayerUnitConfig, {
+          hive: this.hive,
           name: "God",
           movingPoints: 999,
           tileXY: {
@@ -83,10 +84,12 @@ export default class MainScene extends Phaser.Scene {
         })
       );
 
+    this.hive = new Hive({ board: this.board, tileXY: centerCoords });
     this.units = [
       // getGodUnit(),
       new PlayerUnit(
         Object.assign({}, defaultPlayerUnitConfig, {
+          hive: this.hive,
           name: PLAYER_UNIT.NAMES[++this.nameIndex],
           tileXY: {
             x: centerCoords.x - 2,
@@ -96,6 +99,7 @@ export default class MainScene extends Phaser.Scene {
       ),
       new PlayerUnit(
         Object.assign({}, defaultPlayerUnitConfig, {
+          hive: this.hive,
           name: PLAYER_UNIT.NAMES[++this.nameIndex],
           tileXY: {
             x: centerCoords.x - 1,
@@ -105,6 +109,7 @@ export default class MainScene extends Phaser.Scene {
       ),
       new PlayerUnit(
         Object.assign({}, defaultPlayerUnitConfig, {
+          hive: this.hive,
           name: PLAYER_UNIT.NAMES[++this.nameIndex],
           tileXY: {
             x: centerCoords.x + 2,
@@ -114,6 +119,7 @@ export default class MainScene extends Phaser.Scene {
       ),
       new PlayerUnit(
         Object.assign({}, defaultPlayerUnitConfig, {
+          hive: this.hive,
           name: PLAYER_UNIT.NAMES[++this.nameIndex],
           tileXY: {
             x: centerCoords.x - 3,
@@ -123,6 +129,7 @@ export default class MainScene extends Phaser.Scene {
       ),
       new PlayerUnit(
         Object.assign({}, defaultPlayerUnitConfig, {
+          hive: this.hive,
           name: PLAYER_UNIT.NAMES[++this.nameIndex],
           tileXY: {
             x: centerCoords.x - 2,
@@ -131,8 +138,6 @@ export default class MainScene extends Phaser.Scene {
         })
       )
     ];
-
-    this.hive = new Hive({ board: this.board, tileXY: centerCoords });
 
     this.resources = [];
     let placementProbability;
@@ -326,6 +331,7 @@ export default class MainScene extends Phaser.Scene {
   }
 
   setActiveUnit(unit) {
+    this.hive.hideBuildableArea();
     this.units.forEach(u => {
       u.hideMoveableArea();
     });
@@ -482,9 +488,13 @@ class Hive {
     return room;
   }
 
-  showBuildableArea() {
+  showBuildableArea({ moveableTiles }) {
     this.hideBuildableArea();
-    let tileXYArray = this.getBuildableAdjacents();
+    let tileXYArray = intersectionBy(
+      this.getBuildableAdjacents(),
+      moveableTiles,
+      coordKeyExtractor
+    );
 
     for (var i = 0, cnt = tileXYArray.length; i < cnt; i++) {
       this.buildableTiles.push(new BuildableTile(this, tileXYArray[i]));
@@ -582,6 +592,7 @@ class PlayerUnit extends BoardShape {
   constructor(options = {}) {
     let {
       board,
+      hive,
       tileXY,
       movingPoints,
       discoverRangePoints,
@@ -596,17 +607,19 @@ class PlayerUnit extends BoardShape {
     // Shape(board, tileX, tileY, tileZ, fillColor, fillAlpha, addToBoard)
     super(board, tileXY.x, tileXY.y, 6, 0x00cc00);
     this.scene = board.scene;
+    this.hive = hive;
     this.name = name.toUpperCase();
     this.key = key || name || getUUID();
     this.scene.add.existing(this);
     this.setDepth(1);
-    this.setScale(0.75);
+    this.setScale(0.3);
 
     // add behaviors
     this.moveTo = this.scene.rexBoard.add.moveTo(this);
     this.pathFinder = this.scene.rexBoard.add.pathFinder(this, {
       occupiedTest: true
     });
+    this.areaFinder = this.scene.rexBoard.add.pathFinder(this, {});
 
     // private members
     this.maxHitPoints = this.hitPoints = hitPoints;
@@ -662,7 +675,10 @@ class PlayerUnit extends BoardShape {
   }
 
   canBuild() {
-    return true;
+    return (
+      this.hive.getBuildableAdjacents({ moveableTile: this.getMoveableTiles() })
+        .length > 0
+    );
   }
 
   canFarm() {
@@ -698,7 +714,9 @@ class PlayerUnit extends BoardShape {
   selectBuildAction() {
     console.log("selectBuildAction", this.scene.game.events);
     this.hideMoveableArea();
-    this.scene.game.events.emit("unit.buildactionselected");
+    this.scene.game.events.emit("unit.buildactionselected", {
+      moveableTiles: this.getMoveableTiles().concat(this.getCurrentPosition())
+    });
   }
 
   selectFarmAction() {}
@@ -716,6 +734,7 @@ class PlayerUnit extends BoardShape {
 
   select(shouldEmit = true) {
     this.scene.setActiveUnit(this);
+
     this.scene.cameras.main.pan(
       this.x * window.devicePixelRatio,
       this.y * window.devicePixelRatio,
@@ -730,15 +749,25 @@ class PlayerUnit extends BoardShape {
     }
   }
 
+  getCurrentPosition() {
+    return { x: this.tileX, y: this.tileY };
+  }
+
   getVisibleCoords() {
     return this.pathFinder
       .findArea(this.discoverRangePoints)
-      .concat({ x: this.tileX, y: this.tileY });
+      .concat(this.getCurrentPosition());
+  }
+
+  getMoveableTiles(occupiedTest = true) {
+    return occupiedTest
+      ? this.pathFinder.findArea(this.movingPoints)
+      : this.areaFinder.findArea(this.movingPoints);
   }
 
   showMoveableArea() {
     this.hideMoveableArea();
-    var tileXYArray = this.pathFinder.findArea(this.movingPoints);
+    var tileXYArray = this.getMoveableTiles();
 
     for (var i = 0, cnt = tileXYArray.length; i < cnt; i++) {
       this.moveableTiles.push(new MoveableTile(this, tileXYArray[i]));
@@ -848,7 +877,7 @@ class BuildableTile extends BoardShape {
     var board = hive.board;
     var scene = board.scene;
     // Shape(board, tileX, tileY, tileZ, fillColor, fillAlpha, addToBoard)
-    super(board, tileXY.x, tileXY.y, 15, 0x330000);
+    super(board, tileXY.x, tileXY.y, 1, 0x330000);
     scene.add.existing(this);
     this.setScale(0.5);
     this.tileXY = tileXY;
