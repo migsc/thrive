@@ -618,9 +618,9 @@ class PlayerUnit extends BoardShape {
   select(shouldEmit = true) {
     this.scene.setActiveUnit(this);
     this.scene.cameras.main.pan(
-      this.x + window.innerWidth / 2,
-      this.y + window.innerHeight / 2,
-      1000
+      this.x * window.devicePixelRatio,
+      this.y * window.devicePixelRatio,
+      750
     );
 
     if (shouldEmit) {
