@@ -126,17 +126,22 @@ export default class UIUnits extends Component {
           {selectedUnit && selectedUnit.canAct() && (
             <ul>
               {selectedUnit.getAvailableActions().map(actionName => (
-                <label>
-                  <a href="#" onclick={() => this.onActionSelected(actionName)}>
-                    <input
-                      type="radio"
-                      class="radio"
-                      name="action"
-                      checked={this._isActionSelected(actionName)}
-                    />
-                    <span>{actionName.toUpperCase()}</span>
-                  </a>
-                </label>
+                <li>
+                  <label>
+                    <a
+                      href="#"
+                      onclick={() => this.onActionSelected(actionName)}
+                    >
+                      <input
+                        type="radio"
+                        class="radio"
+                        name="action"
+                        checked={this._isActionSelected(actionName)}
+                      />
+                      <span>{actionName.toUpperCase()}</span>
+                    </a>
+                  </label>
+                </li>
               ))}
             </ul>
           )}

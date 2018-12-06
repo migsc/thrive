@@ -1,9 +1,9 @@
 import Board from "plugins/board/board/Board";
 import BoardShape from "plugins/board/shape/Shape";
 
-import { differenceBy, flatten } from "lodash";
+import { differenceBy, flatten, without, uniqBy } from "lodash";
 import { getUUID } from "../lib/utils";
-import { PLAYER_UNIT, ACTION } from "../lib/constants";
+import { PLAYER_UNIT, ACTION, ROOM, RESOURCE } from "../lib/constants";
 
 const coordKeyExtractor = c => `${c.x}-${c.y}`;
 
@@ -132,12 +132,7 @@ export default class MainScene extends Phaser.Scene {
       )
     ];
 
-    this.hive = [
-      new Room({
-        board: this.board,
-        tileXY: centerCoords
-      })
-    ];
+    this.hive = new Hive({ board: this.board, tileXY: centerCoords });
 
     this.resources = [];
     let placementProbability;
@@ -445,6 +440,76 @@ class GameBoard extends Board {
 //   }
 // }
 
+class Hive {
+  constructor({ board, tileXY }) {
+    this.board = board;
+    this.rooms = [];
+    this.buildableTiles = [];
+    this.throneRoom = this.addRoom(ROOM.THRONE, tileXY.x, tileXY.y);
+    this.addRoom(ROOM.HONEY_FACTORY, tileXY.x + 1, tileXY.y);
+    this.addRoom(ROOM.HONEY_FACTORY, tileXY.x, tileXY.y + 1);
+    this.board.scene.game.events.on(
+      "unit.buildactionselected",
+      this.showBuildableArea,
+      this
+    );
+    this.board.scene.game.events.on(
+      "unit.moveactionselected",
+      this.hideBuildableArea,
+      this
+    );
+  }
+
+  // return this.pathFinder
+  // .findArea(this.discoverRangePoints)
+  // .concat({ x: this.tileX, y: this.tileY });
+
+  addRoom(type, tileX, tileY) {
+    let options = { tileXY: { x: tileX, y: tileY }, board: this.board };
+    let room;
+
+    switch (type) {
+      case ROOM.THRONE:
+        room = new ThroneRoom(options);
+        break;
+      case ROOM.HONEY_FACTORY:
+      default:
+        room = new HoneyFactory(options);
+        break;
+    }
+
+    this.rooms.push(room);
+    return room;
+  }
+
+  showBuildableArea() {
+    this.hideBuildableArea();
+    let tileXYArray = this.getBuildableAdjacents();
+
+    for (var i = 0, cnt = tileXYArray.length; i < cnt; i++) {
+      this.buildableTiles.push(new BuildableTile(this, tileXYArray[i]));
+    }
+
+    return this;
+  }
+
+  hideBuildableArea() {
+    for (var i = 0, cnt = this.buildableTiles.length; i < cnt; i++) {
+      this.buildableTiles[i].destroy();
+    }
+
+    this.buildableTiles.length = 0;
+    return this;
+  }
+
+  getBuildableAdjacents() {
+    return uniqBy(
+      flatten(this.rooms.map(r => r.getBuildableAdjacents())),
+      coordKeyExtractor
+    );
+  }
+}
+
 class Room extends BoardShape {
   constructor(options) {
     let { board, tileXY } = options;
@@ -453,8 +518,37 @@ class Room extends BoardShape {
       tileXY = board.getRandomEmptyTileXY(0);
     }
     // Shape(board, tileX, tileY, tileZ, fillColor, fillAlpha, addToBoard)
-    super(board, tileXY.x, tileXY.y, 1, 0xffff00, 0.5);
+    super(board, tileXY.x, tileXY.y, 1, options.color || 0xffff00, 0.5);
+
     scene.add.existing(this);
+    this.pathFinder = scene.rexBoard.add.pathFinder(this, {
+      occupiedTest: true
+    });
+  }
+
+  getBuildableAdjacents() {
+    return this.pathFinder.findArea(1);
+  }
+}
+
+class ThroneRoom extends Room {
+  constructor(options) {
+    super(options);
+    this.type = ROOM.THRONE;
+    this.allowedAdjacentRooms = [without(Object.values(ROOM), this.type)];
+  }
+}
+
+class HoneyFactory extends Room {
+  constructor(options) {
+    super(Object.assign(options, { color: 0xffce42 }));
+    this.type = ROOM.HONEY_FACTORY;
+    this.allowedAdjacentRooms = [
+      this.type,
+      ROOM.THRONE,
+      ROOM.JELLY_FACTORY,
+      ROOM.WAX_FACTORY
+    ];
   }
 }
 
@@ -568,7 +662,7 @@ class PlayerUnit extends BoardShape {
   }
 
   canBuild() {
-    return false;
+    return true;
   }
 
   canFarm() {
@@ -598,9 +692,14 @@ class PlayerUnit extends BoardShape {
 
   selectMoveAction() {
     this.showMoveableArea();
+    this.scene.game.events.emit("unit.moveactionselected");
   }
 
-  selectBuildAction() {}
+  selectBuildAction() {
+    console.log("selectBuildAction", this.scene.game.events);
+    this.hideMoveableArea();
+    this.scene.game.events.emit("unit.buildactionselected");
+  }
 
   selectFarmAction() {}
 
@@ -740,5 +839,33 @@ class MoveableTile extends BoardShape {
     this.setFillStyle(0xff0000);
     console.log(this);
     this.events.emit("tile.moved", { tile: this, pointer });
+  }
+}
+
+class BuildableTile extends BoardShape {
+  constructor(hive, tileXY) {
+    //   console.log('MoveableTile constructor tileXY', tileXY);
+    var board = hive.board;
+    var scene = board.scene;
+    // Shape(board, tileX, tileY, tileZ, fillColor, fillAlpha, addToBoard)
+    super(board, tileXY.x, tileXY.y, 15, 0x330000);
+    scene.add.existing(this);
+    this.setScale(0.5);
+    this.tileXY = tileXY;
+    this.hive = hive;
+    this.events = hive.board.scene.game.events;
+
+    // on pointer down, move to this tile
+    this.on("board.pointerdown", this.onPointerDown.bind(this), this);
+  }
+
+  onPointerDown(pointer) {
+    // console.log(`Moving to tile with x,y,pointer`, this.x, this.y, pointer);
+    // if (!this.unit.moveToTile(this)) {
+    //   return;
+    // }
+    // this.setFillStyle(0xff0000);
+    // console.log(this);
+    // this.events.emit("tile.moved", { tile: this, pointer });
   }
 }

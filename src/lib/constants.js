@@ -29,6 +29,21 @@ export const PLAYER_UNIT = {
   ]
 };
 
+export const RESOURCE = {
+  NECTAR: "nectar",
+  HONEY: "honey",
+  JELLY: "jelly",
+  WAX: "wax"
+};
+
+export const ROOM = {
+  THRONE: "throne",
+  HONEY_FACTORY: "honey factory",
+  JELLY_FACTORY: "jelly factory",
+  NURSERY: "nursery",
+  WAX_FACTORY: "wax factory"
+};
+
 export const ACTION = {
   MOVE: "move",
   BUILD: "build",
