@@ -368,6 +368,8 @@ export default class MainScene extends Phaser.Scene {
       this.hiddenTiles[coord.x][coord.y].visible = false;
     });
 
+    console.log("discoverTiles", this);
+
     this.visibleTiles = latestVisibleTiles;
   }
 }
@@ -504,6 +506,7 @@ class PlayerUnit extends BoardShape {
     this.key = key || name || getUUID();
     this.scene.add.existing(this);
     this.setDepth(1);
+    this.setScale(0.75);
 
     // add behaviors
     this.moveTo = this.scene.rexBoard.add.moveTo(this);
@@ -629,7 +632,9 @@ class PlayerUnit extends BoardShape {
   }
 
   getVisibleCoords() {
-    return this.pathFinder.findArea(this.discoverRangePoints);
+    return this.pathFinder
+      .findArea(this.discoverRangePoints)
+      .concat({ x: this.tileX, y: this.tileY });
   }
 
   showMoveableArea() {
@@ -686,7 +691,11 @@ class PlayerUnit extends BoardShape {
       this
     );
 
-    this.moveTo.moveTo(path.shift());
+    let tileDest = path.shift();
+    this.tileX = tileDest.x;
+    this.tileY = tileDest.y;
+
+    this.moveTo.moveTo(tileDest);
 
     return this;
   }
