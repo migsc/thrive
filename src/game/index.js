@@ -12,7 +12,7 @@ let game = new Phaser.Game({
       gravity: { y: 200 }
     }
   },
-  zoom: window.devicePixelRatio, // Set the zoom to the inverse of the devicePixelRatio
+  zoom: 1 / window.devicePixelRatio, // Set the zoom to the inverse of the devicePixelRatio
   scene: [MainScene],
   plugins: {
     scene: [
@@ -26,6 +26,6 @@ let game = new Phaser.Game({
   autoFocus: true
 });
 
-console.log("game", game);
+window.game = game;
 
 export default game;

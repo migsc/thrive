@@ -196,7 +196,6 @@ export default class MainScene extends Phaser.Scene {
     // for (var i = 0; i < 20; i++) {
     //   new Blocker({ board: this.board });
     // }
-
     this.cameras.main.fadeIn(1500);
 
     console.log("MainScene.create this", this, this.game.debug);
@@ -632,6 +631,11 @@ class PlayerUnit extends BoardShape {
 
     // events
     this.on("board.pointerdown", this.onPointerDown.bind(this), this);
+    this.scene.game.events.on(
+      "tile.selectbuild",
+      this.moveThenBuildOnTile,
+      this
+    );
   }
 
   onPointerDown(pointer) {
@@ -735,10 +739,14 @@ class PlayerUnit extends BoardShape {
   select(shouldEmit = true) {
     this.scene.setActiveUnit(this);
 
-    this.scene.cameras.main.pan(
-      this.x * window.devicePixelRatio,
-      this.y * window.devicePixelRatio,
-      750
+    // this.scene.cameras.main.pan(
+    //   this.x + this.x * (52 / 850),
+    //   this.y + this.y * (52 / 850),
+    //   750
+    // );
+    this.scene.cameras.main.setScroll(
+      this.x / window.devicePixelRatio,
+      this.y / window.devicePixelRatio
     );
 
     if (shouldEmit) {
@@ -783,7 +791,26 @@ class PlayerUnit extends BoardShape {
     return this;
   }
 
-  moveToTile(endTile) {
+  moveThenBuildOnTile({ tile, pointer }) {
+    if (
+      !this.moveToTile(tile, () => {
+        this.buildOnTile(tile.tileXY);
+      })
+    ) {
+      return;
+    }
+
+    this.setFillStyle(0xff0000);
+    console.log(this);
+    this.events.emit("tile.moved", { tile: this, pointer });
+  }
+
+  buildOnTile(tileXY) {
+    debugger;
+    this.hive.addRoom(ROOM.HONEY_FACTORY, tileXY.x, tileXY.y);
+  }
+
+  moveToTile(endTile, onMoveDone = () => {}) {
     console.log("ChessA.moveToTile endTile", endTile, endTile.rexChess.tileXYZ);
 
     if (this.moveTo.isRunning) {
@@ -796,15 +823,17 @@ class PlayerUnit extends BoardShape {
     // this.scene.cameras.main.startFollow(this);
     this.events = this.scene.game.events;
 
-    this.moveAlongPath(tileXYArray);
+    this.moveAlongPath(tileXYArray, onMoveDone);
 
     return true;
   }
 
-  moveAlongPath(path) {
+  moveAlongPath(path, onMoveDone = () => {}) {
     if (path.length === 0) {
       // this.scene.cameras.main.stopFollow();
       this.showMoveableArea();
+
+      onMoveDone();
 
       this.events.emit("unit.movedone");
 
@@ -814,7 +843,7 @@ class PlayerUnit extends BoardShape {
     this.moveTo.once(
       "complete",
       () => {
-        this.moveAlongPath(path);
+        this.moveAlongPath(path, onMoveDone);
       },
       this
     );
@@ -889,12 +918,7 @@ class BuildableTile extends BoardShape {
   }
 
   onPointerDown(pointer) {
-    // console.log(`Moving to tile with x,y,pointer`, this.x, this.y, pointer);
-    // if (!this.unit.moveToTile(this)) {
-    //   return;
-    // }
-    // this.setFillStyle(0xff0000);
-    // console.log(this);
-    // this.events.emit("tile.moved", { tile: this, pointer });
+    this.setFillStyle(0xff0000);
+    this.events.emit("tile.selectbuild", { tile: this, pointer });
   }
 }
