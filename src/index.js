@@ -23,25 +23,36 @@ const getHexCorner = (centerX, centerY, size, i, degreesRotated = 0) => {
 
 const game = new Phaser.Game(config);
 
+const styles = {
+  lineStyle: [2, 0x00aa00, 1.0],
+  fillStyle: [0xFFFFFF, 0.6]
+}
+
+class Hexagon extends Phaser.Geom.Polygon {
+  constructor({ graphics, center: { x, y }, size, degreesRotated }) {
+    super(indicesSix.map(i => getHexCorner(x, y, size, i, degreesRotated)))
+    this.graphics = graphics;
+    this.graphics.lineStyle.apply(this.graphics, styles.lineStyle);
+    this.graphics.fillStyle.apply(this.graphics, styles.fillStyle)
+  }
+
+  render() {
+    this.graphics.beginPath();
+    this.graphics.moveTo(this.points[0].x, this.points[0].y);
+    this.points.forEach(point => {
+      this.graphics.lineTo(point.x, point.y);
+    });
+    this.graphics.closePath();
+    this.graphics.strokePath();
+    this.graphics.fill();
+  }
+}
+
 function preload() {
 }
 
 function create() {
-  const polygon = new Phaser.Geom.Polygon(indicesSix.map(i => getHexCorner(200, 200, 50, i)));
-
   const graphics = this.add.graphics({ x: 0, y: 0 });
-
-  graphics.lineStyle(2, 0x00aa00);
-
-  graphics.beginPath();
-
-  graphics.moveTo(polygon.points[0].x, polygon.points[0].y);
-
-  for (var i = 1; i < polygon.points.length; i++) {
-    graphics.lineTo(polygon.points[i].x, polygon.points[i].y);
-  }
-
-  graphics.closePath();
-  graphics.strokePath();
-
+  const polygon = new Hexagon({ graphics, center: { x: 200, y: 200 }, size: 50, degreesRotated: 30 })
+  polygon.render();
 }
