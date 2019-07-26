@@ -1,33 +1,32 @@
-import "nes.css/css/nes.min.css";
-import "webpack-jquery-ui/draggable";
+import Phaser from "phaser";
+import logoImg from "./assets/logo.png";
 
-import { h, render, Component } from "preact";
-/** @jsx h */
-
-import linkState from "linkstate";
-
-import game from "game";
-
-import BottomUI from "./ui/bottom";
-
-import "styles/index.scss";
-
-class App extends Component {
-  constructor() {
-    super();
-    this.state = {
-      text: "hello"
-    };
+const config = {
+  type: Phaser.AUTO,
+  parent: "phaser-example",
+  width: 800,
+  height: 600,
+  scene: {
+    preload: preload,
+    create: create
   }
+};
 
-  render({}, { text }) {
-    return (
-      <app>
-        <BottomUI />
-      </app>
-    );
-  }
+const game = new Phaser.Game(config);
+
+function preload() {
+  this.load.image("logo", logoImg);
 }
 
-// Start 'er up:
-render(<App />, document.querySelector("#ui"));
+function create() {
+  const logo = this.add.image(400, 150, "logo");
+
+  this.tweens.add({
+    targets: logo,
+    y: 450,
+    duration: 2000,
+    ease: "Power2",
+    yoyo: true,
+    loop: -1
+  });
+}
