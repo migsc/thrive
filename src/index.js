@@ -1,5 +1,4 @@
 import Phaser from "phaser";
-import logoImg from "./assets/logo.png";
 
 const config = {
   type: Phaser.AUTO,
@@ -12,21 +11,37 @@ const config = {
   }
 };
 
+const indicesSix = Array.from(Array(6).keys());
+
+const getHexCorner = (centerX, centerY, size, i, degreesRotated = 0) => {
+  const angleDegrees = 60 * i - degreesRotated;
+  const angleRad = (Math.PI / 180) * angleDegrees;
+  const cornerX = centerX + size * Math.cos(angleRad);
+  const cornerY = centerY + size * Math.sin(angleRad);
+  return new Phaser.Geom.Point(cornerX, cornerY)
+}
+
 const game = new Phaser.Game(config);
 
 function preload() {
-  this.load.image("logo", logoImg);
 }
 
 function create() {
-  const logo = this.add.image(400, 150, "logo");
+  const polygon = new Phaser.Geom.Polygon(indicesSix.map(i => getHexCorner(200, 200, 50, i)));
 
-  this.tweens.add({
-    targets: logo,
-    y: 450,
-    duration: 2000,
-    ease: "Power2",
-    yoyo: true,
-    loop: -1
-  });
+  const graphics = this.add.graphics({ x: 0, y: 0 });
+
+  graphics.lineStyle(2, 0x00aa00);
+
+  graphics.beginPath();
+
+  graphics.moveTo(polygon.points[0].x, polygon.points[0].y);
+
+  for (var i = 1; i < polygon.points.length; i++) {
+    graphics.lineTo(polygon.points[i].x, polygon.points[i].y);
+  }
+
+  graphics.closePath();
+  graphics.strokePath();
+
 }
