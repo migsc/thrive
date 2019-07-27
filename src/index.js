@@ -35,11 +35,27 @@ const styles = {
 }
 
 class Hexagon extends Phaser.Geom.Polygon {
-  constructor({ graphics, center: { x, y }, size, degreesRotated }) {
-    super(indicesSix.map(i => getHexCorner(x, y, size, i, degreesRotated)))
+  constructor({ graphics, center: { x, y }, size, pointy = false }) {
+    super(indicesSix.map(i => getHexCorner(x, y, size, i, pointy ? 30 : 0)))
+    this.size = size;
     this.graphics = graphics;
+    this.pointy = pointy;
+
+    this.applyStyles();
+  }
+
+  width() {
+    return (this.pointy ? Math.sqrt(3) : 2) * this.size;
+  }
+
+  height() {
+    return (this.pointy ? 2 : Math.sqrt(3)) * this.size;
+  }
+
+
+  applyStyles() {
     this.graphics.lineStyle.apply(this.graphics, styles.lineStyle);
-    this.graphics.fillStyle.apply(this.graphics, styles.fillStyle)
+    this.graphics.fillStyle.apply(this.graphics, styles.fillStyle);
   }
 
   render() {
@@ -59,7 +75,7 @@ function preload() {
 
 function create() {
   const graphics = this.add.graphics({ x: 0, y: 0 });
-  const polygon = new Hexagon({ graphics, center: { x: 200, y: 200 }, size: 50, degreesRotated: 30 })
+  const polygon = new Hexagon({ graphics, center: { x: 200, y: 200 }, size: 50 })
   polygon.render();
 
   this.input.on('pointerdown', function (pointer) {
