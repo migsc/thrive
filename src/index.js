@@ -2,13 +2,18 @@ import Phaser from "phaser";
 
 const config = {
   type: Phaser.AUTO,
-  parent: "phaser-example",
-  width: 800,
-  height: 600,
   scene: {
     preload: preload,
     create: create
-  }
+  },
+  width: 1024,
+  height: 768,
+  scale: {
+    mode: Phaser.Scale.FIT,
+    autoCenter: Phaser.Scale.CENTER_BOTH
+  },
+  autoRound: false,
+  backgroundColor: 0xffffff
 };
 
 const indicesSix = Array.from(Array(6).keys());
@@ -18,22 +23,27 @@ const getHexCorner = (centerX, centerY, size, i, degreesRotated = 0) => {
   const angleRad = (Math.PI / 180) * angleDegrees;
   const cornerX = centerX + size * Math.cos(angleRad);
   const cornerY = centerY + size * Math.sin(angleRad);
-  return new Phaser.Geom.Point(cornerX, cornerY)
-}
+  return new Phaser.Geom.Point(cornerX, cornerY);
+};
 
 const game = new Phaser.Game(config);
 
 const styles = {
-  lineStyle: [2, 0x00aa00, 1.0],
-  fillStyle: [0xFFFFFF, 0.6]
-}
+  lineStyle: [3, 0x000000, 1.0],
+  fillStyle: [0xdddddd, 0.6]
+};
 
 class Hexagon extends Phaser.Geom.Polygon {
   constructor({ graphics, center: { x, y }, size, degreesRotated }) {
-    super(indicesSix.map(i => getHexCorner(x, y, size, i, degreesRotated)))
+    super(indicesSix.map(i => getHexCorner(x, y, size, i, degreesRotated)));
     this.graphics = graphics;
-    this.graphics.lineStyle.apply(this.graphics, styles.lineStyle);
-    this.graphics.fillStyle.apply(this.graphics, styles.fillStyle)
+    this.applyStyles();
+  }
+
+  applyStyles() {
+    for (let key in styles) {
+      this.graphics[key].apply(this.graphics, styles[key]);
+    }
   }
 
   render() {
@@ -48,11 +58,15 @@ class Hexagon extends Phaser.Geom.Polygon {
   }
 }
 
-function preload() {
-}
+function preload() {}
 
 function create() {
   const graphics = this.add.graphics({ x: 0, y: 0 });
-  const polygon = new Hexagon({ graphics, center: { x: 200, y: 200 }, size: 50, degreesRotated: 30 })
+  const polygon = new Hexagon({
+    graphics,
+    center: { x: 200, y: 200 },
+    size: 50,
+    degreesRotated: 30
+  });
   polygon.render();
 }
