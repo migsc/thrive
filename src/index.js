@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import Hexagon, { getHexWidth, getHexHeight } from "./lib/Hexagon";
 
 const config = {
   type: Phaser.AUTO,
@@ -16,57 +17,37 @@ const config = {
   backgroundColor: 0xffffff
 };
 
-const indicesSix = Array.from(Array(6).keys());
-
-const getHexCorner = (centerX, centerY, size, i, degreesRotated = 0) => {
-  const angleDegrees = 60 * i - degreesRotated;
-  const angleRad = (Math.PI / 180) * angleDegrees;
-  const cornerX = centerX + size * Math.cos(angleRad);
-  const cornerY = centerY + size * Math.sin(angleRad);
-  return new Phaser.Geom.Point(cornerX, cornerY);
-};
-
+// eslint-disable-next-line no-unused-vars
 const game = new Phaser.Game(config);
-
-const styles = {
-  lineStyle: [3, 0x000000, 1.0],
-  fillStyle: [0xdddddd, 0.6]
-};
-
-class Hexagon extends Phaser.Geom.Polygon {
-  constructor({ graphics, center: { x, y }, size, degreesRotated }) {
-    super(indicesSix.map(i => getHexCorner(x, y, size, i, degreesRotated)));
-    this.graphics = graphics;
-    this.applyStyles();
-  }
-
-  applyStyles() {
-    for (let key in styles) {
-      this.graphics[key].apply(this.graphics, styles[key]);
-    }
-  }
-
-  render() {
-    this.graphics.beginPath();
-    this.graphics.moveTo(this.points[0].x, this.points[0].y);
-    this.points.forEach(point => {
-      this.graphics.lineTo(point.x, point.y);
-    });
-    this.graphics.closePath();
-    this.graphics.strokePath();
-    this.graphics.fill();
-  }
-}
 
 function preload() {}
 
+// eslint-disable-next-line max-statements
 function create() {
   const graphics = this.add.graphics({ x: 0, y: 0 });
-  const polygon = new Hexagon({
-    graphics,
-    center: { x: 200, y: 200 },
-    size: 50,
-    degreesRotated: 30
-  });
-  polygon.render();
+  const startPoint = { x: 200, y: 200 };
+  const numColumns = 4;
+  const numRows = 4;
+  const size = 50;
+  const degreesRotated = 30;
+  const offset = false;
+
+  let offsetRow = offset;
+  const hexWidth = getHexWidth(size, degreesRotated);
+  const hexHeight = getHexHeight(size, degreesRotated);
+  for (let r = 0; r < numRows; r++) {
+    for (let c = 0; c < numColumns; c++) {
+      new Hexagon({
+        graphics,
+        center: {
+          ...startPoint,
+          x: startPoint.x + c * hexWidth - (offsetRow ? hexWidth * 0.5 : 0),
+          y: startPoint.y + r * hexHeight * (3 / 4)
+        },
+        size,
+        degreesRotated
+      }).render();
+    }
+    offsetRow = !offsetRow;
+  }
 }
