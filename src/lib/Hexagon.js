@@ -1,16 +1,7 @@
 import Phaser from "phaser";
-
+import { isDivisibleBy } from "../utils/math";
+import { first } from "lodash";
 const indicesSix = Array.from(Array(6).keys());
-
-const getHexCorner = (centerX, centerY, size, i, degreesRotated = 0) => {
-  const angleDegrees = 60 * i - degreesRotated;
-  const angleRad = (Math.PI / 180) * angleDegrees;
-  const cornerX = centerX + size * Math.cos(angleRad);
-  const cornerY = centerY + size * Math.sin(angleRad);
-  return new Phaser.Geom.Point(cornerX, cornerY);
-};
-
-const isDivisibleBy = (n, d) => n % d === 0;
 
 const isPointyHex = angle => {
   if (angle === 0) return false;
@@ -19,27 +10,54 @@ const isPointyHex = angle => {
 
 const isFlatHex = angle => isDivisibleBy(angle, 60);
 
-export const getHexWidth = (size, angle) => {
-  if (isFlatHex(angle)) return 2 * size;
-  if (isPointyHex(angle)) return Math.sqrt(3) * size;
-  throw new Error(`Angle ${angle} unsupported for calculating hex width!`);
+const getHexCorner = (centerX, centerY, size, i, angle = 0) => {
+  const angleDegrees = 60 * i - angle;
+  const angleRad = (Math.PI / 180) * angleDegrees;
+  const cornerX = centerX + size * Math.cos(angleRad);
+  const cornerY = centerY + size * Math.sin(angleRad);
+  return new Phaser.Geom.Point(cornerX, cornerY);
 };
 
-export const getHexHeight = (size, angle) => {
+const getHexWidth = (size, angle) => {
+  if (isFlatHex(angle)) return 2 * size;
+  if (isPointyHex(angle)) return Math.sqrt(3) * size;
+  throw new Error(
+    `Angle ${angle} unsupported for calculating hex width. Must be divisible by 30 or 60.`
+  );
+};
+
+const getHexHeight = (size, angle) => {
   if (isFlatHex(angle)) return Math.sqrt(3) * size;
   if (isPointyHex(angle)) return 2 * size;
-  throw new Error(`Angle ${angle} unsupported for calculating hex width!`);
+  throw new Error(
+    `Angle ${angle} unsupported for calculating hex width. Must be divisible by 30 or 60.`
+  );
 };
+
+const getHexAngle = orientation => {
+  if (orientation === "pointy") return 30;
+  else if (orientation === "flat") return 0;
+  else
+    throw new Error(
+      `Orientation '${orientation}' not supported for hexagon. Must be one of [pointy|flat]`
+    );
+};
+
+const getHexPoints = (x, y, size, angle) =>
+  indicesSix.map(i => getHexCorner(x, y, size, i, angle));
 
 const styles = {
   lineStyle: [3, 0x000000, 1.0],
   fillStyle: [0xdddddd, 0.6]
 };
 
-class Hexagon extends Phaser.Geom.Polygon {
-  constructor({ graphics, center: { x, y }, size, degreesRotated }) {
-    super(indicesSix.map(i => getHexCorner(x, y, size, i, degreesRotated)));
+class Hexagon {
+  constructor({ graphics, size, orientation }) {
     this.graphics = graphics;
+    this.size = size;
+    this.angle = getHexAngle(orientation);
+    this.width = getHexWidth(size, this.angle);
+    this.height = getHexHeight(size, this.angle);
     this.applyStyles();
   }
 
@@ -49,10 +67,11 @@ class Hexagon extends Phaser.Geom.Polygon {
     });
   }
 
-  render() {
+  renderAt({ x, y }) {
+    const points = getHexPoints(x, y, this.size, this.angle);
     this.graphics.beginPath();
-    this.graphics.moveTo(this.points[0].x, this.points[0].y);
-    this.points.forEach(point => {
+    this.graphics.moveTo(points[0].x, points[0].y);
+    points.forEach(point => {
       this.graphics.lineTo(point.x, point.y);
     });
     this.graphics.closePath();
