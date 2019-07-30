@@ -50,7 +50,7 @@ const styles = {
   fillStyle: [0xdddddd, 0.6]
 };
 
-class Hexagon {
+export default class Hexagon {
   constructor({ graphics, size, orientation }) {
     this.graphics = graphics;
     this.size = size;
@@ -66,6 +66,10 @@ class Hexagon {
     });
   }
 
+  getStrokeWidth() {
+    return first(styles.lineStyle);
+  }
+
   renderAt({ x, y }) {
     const points = getHexPoints(x, y, this.size, this.angle);
     this.graphics.beginPath();
@@ -78,5 +82,3 @@ class Hexagon {
     this.graphics.fill();
   }
 }
-
-export default Hexagon;

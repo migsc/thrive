@@ -1,6 +1,8 @@
 import Phaser from "phaser";
 import Board from "./lib/Board";
 
+import "./styles/index.scss";
+
 const config = {
   type: Phaser.AUTO,
   scene: {
@@ -32,11 +34,11 @@ function create() {
       x: 0,
       y: 0
     },
-    rows: 200,
-    cols: 200,
+    rows: 4,
+    cols: 4,
     offsetMode: "even",
     orientation: "flat",
-    hexagonSize: 10
+    hexagonSize: 50
   });
 
   this.board.render();

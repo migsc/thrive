@@ -1,14 +1,16 @@
-import Hexagon, { getHexAngle } from "./Hexagon";
+import Hexagon, { styles as hexStyles } from "./Hexagon";
 
 import { isEven, isOdd } from "../utils/math";
 
-const getOffsetDistance = (length, index, offsetMode) => {
+const getOffsetDistance = length => length * 0.5;
+
+const getOffsetDistanceAt = (length, index, offsetMode) => {
   const n = index + 1;
 
   if (offsetMode === "even") {
-    return isEven(n) ? length * 0.5 : 0;
+    return isEven(n) ? getOffsetDistance(length) : 0;
   } else if (offsetMode === "odd") {
-    return isOdd(n) ? length * 0.5 : 0;
+    return isOdd(n) ? getOffsetDistance(length) : 0;
   }
   throw new Error(
     `Offset mode '${offsetMode}' not supported for board. Must be one of [even|odd].`
@@ -24,19 +26,32 @@ const getNextHexCenter = (
 ) => {
   if (orientation === "pointy") {
     return {
-      x: x + indexCol * width - getOffsetDistance(width, indexRow, offsetMode),
+      x:
+        x + indexCol * width - getOffsetDistanceAt(width, indexRow, offsetMode),
       y: y + indexRow * height * (3 / 4)
     };
   } else if (orientation === "flat") {
     return {
       x: x + indexCol * width * (3 / 4),
-      y: y + indexRow * height - getOffsetDistance(height, indexCol, offsetMode)
+      y:
+        y +
+        indexRow * height -
+        getOffsetDistanceAt(height, indexCol, offsetMode)
     };
   }
 
   throw new Error(
     `Orientation '${orientation}' not supported for board. Must be one of [pointy|flat]`
   );
+};
+
+const getOriginFitted = ({ x, y }, hex, orientation) => {
+  const stroke = hex.getStrokeWidth();
+
+  return {
+    x: x + stroke + (orientation === "pointy" ? hex.width : hex.size),
+    y: y + stroke + (orientation === "flat" ? hex.height : hex.size)
+  };
 };
 
 export default class Board {
@@ -51,7 +66,6 @@ export default class Board {
   }) {
     this.rows = rows;
     this.cols = cols;
-    this.origin = origin;
     this.offsetMode = offsetMode;
     this.orientation = orientation;
     this.hex = new Hexagon({
@@ -59,6 +73,7 @@ export default class Board {
       orientation,
       size: hexagonSize
     });
+    this.origin = getOriginFitted(origin, this.hex, orientation);
   }
 
   render() {
