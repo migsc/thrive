@@ -2,30 +2,42 @@ import Hexagon, { getHexAngle } from "./Hexagon";
 
 import { isEven, isOdd } from "../utils/math";
 
-const getOffsetDistance = (hexWidth, indexRow, offsetMode) => {
-  const offset = hexWidth * 0.5;
-  const n = indexRow + 1;
-  if (offsetMode === "even") return isEven(n) ? offset : 0;
-  else if (offsetMode === "odd") return isOdd(n) ? offset : 0;
-  else
-    throw new Error(
-      `Offset mode '${offsetMode}' not supported. Must be one of [even|odd].`
-    );
+const getOffsetDistance = (length, index, offsetMode) => {
+  const n = index + 1;
+
+  if (offsetMode === "even") {
+    return isEven(n) ? length * 0.5 : 0;
+  } else if (offsetMode === "odd") {
+    return isOdd(n) ? length * 0.5 : 0;
+  }
+  throw new Error(
+    `Offset mode '${offsetMode}' not supported for board. Must be one of [even|odd].`
+  );
 };
 
 const getNextHexCenter = (
-  originX,
-  originY,
-  width,
-  height,
-  indexCol,
-  indexRow,
-  offsetMode
-) => ({
-  x:
-    originX + indexCol * width - getOffsetDistance(width, indexRow, offsetMode),
-  y: originY + indexRow * height * (3 / 4)
-});
+  { width, height },
+  { x, y },
+  [indexRow, indexCol],
+  offsetMode,
+  orientation
+) => {
+  if (orientation === "pointy") {
+    return {
+      x: x + indexCol * width - getOffsetDistance(width, indexRow, offsetMode),
+      y: y + indexRow * height * (3 / 4)
+    };
+  } else if (orientation === "flat") {
+    return {
+      x: x + indexCol * width * (3 / 4),
+      y: y + indexRow * height - getOffsetDistance(height, indexCol, offsetMode)
+    };
+  }
+
+  throw new Error(
+    `Orientation '${orientation}' not supported for board. Must be one of [pointy|flat]`
+  );
+};
 
 export default class Board {
   constructor({
@@ -41,6 +53,7 @@ export default class Board {
     this.cols = cols;
     this.origin = origin;
     this.offsetMode = offsetMode;
+    this.orientation = orientation;
     this.hex = new Hexagon({
       graphics,
       orientation,
@@ -53,13 +66,11 @@ export default class Board {
     for (let r = 0; r < this.rows; r++) {
       for (let c = 0; c < this.cols; c++) {
         point = getNextHexCenter(
-          this.origin.x,
-          this.origin.y,
-          this.hex.width,
-          this.hex.height,
-          c,
-          r,
-          this.offsetMode
+          this.hex,
+          this.origin,
+          [r, c],
+          this.offsetMode,
+          this.orientation
         );
         this.hex.renderAt(point);
       }

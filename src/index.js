@@ -29,14 +29,14 @@ function create() {
   this.board = new Board({
     graphics,
     origin: {
-      x: 200,
-      y: 200
+      x: 0,
+      y: 0
     },
-    rows: 4,
-    cols: 4,
-    offsetMode: "odd",
+    rows: 200,
+    cols: 200,
+    offsetMode: "even",
     orientation: "flat",
-    hexagonSize: 50
+    hexagonSize: 10
   });
 
   this.board.render();

@@ -37,10 +37,9 @@ const getHexHeight = (size, angle) => {
 const getHexAngle = orientation => {
   if (orientation === "pointy") return 30;
   else if (orientation === "flat") return 0;
-  else
-    throw new Error(
-      `Orientation '${orientation}' not supported for hexagon. Must be one of [pointy|flat]`
-    );
+  throw new Error(
+    `Orientation '${orientation}' not supported for hexagon. Must be one of [pointy|flat]`
+  );
 };
 
 const getHexPoints = (x, y, size, angle) =>
