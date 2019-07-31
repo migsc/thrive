@@ -26,9 +26,11 @@ function preload() {}
 
 // eslint-disable-next-line max-statements
 function create() {
+  console.log("create this", this);
   const graphics = this.add.graphics({ x: 0, y: 0 });
 
   this.board = new Board({
+    game: this,
     graphics,
     origin: {
       x: 0,
@@ -37,8 +39,8 @@ function create() {
     rows: 4,
     cols: 4,
     layout: "even-q",
-
-    hexagonSize: 50
+    hexagonSize: 50,
+    renderText: (...args) => this.add.text(...args)
   });
 
   this.board.render();

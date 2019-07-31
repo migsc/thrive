@@ -68,19 +68,38 @@ const getOriginFitted = ({ x, y }, hex, orientation) => {
   };
 };
 
+const styles = {
+  text: {
+    fontSize: 16,
+    color: "#000"
+  }
+};
+
+const getTextPositionAdjusted = ({ x, y }) => {
+  console.log("fontSize", styles.text.fontSize);
+  return {
+    x: x - parseFloat(styles.text.fontSize),
+    y: y - parseFloat(styles.text.fontSize) / 2
+  };
+};
+
 export default class Board {
   constructor({
+    game,
     graphics,
     origin = { x: 0, y: 0 },
     rows = 16,
     cols = 16,
     hexagonSize = 50,
-    layout = "odd-r"
+    layout = "odd-r",
+    renderText = () => {}
   }) {
+    this.game = game;
     this.rows = rows;
     this.cols = cols;
     this.offsetMode = layouts[layout].offsetMode;
     this.orientation = layouts[layout].orientation;
+    this.renderText = renderText;
 
     this.hex = new Hexagon({
       graphics,
@@ -93,8 +112,9 @@ export default class Board {
 
   render() {
     let point;
-    for (let r = 0; r < this.rows; r++) {
-      for (let c = 0; c < this.cols; c++) {
+    let textPosition;
+    for (let c = 0; c < this.cols; c++) {
+      for (let r = 0; r < this.rows; r++) {
         point = getNextHexCenter(
           this.hex,
           this.origin,
@@ -102,7 +122,17 @@ export default class Board {
           this.offsetMode,
           this.orientation
         );
+        console.log("point", point);
         this.hex.renderAt(point);
+
+        textPosition = getTextPositionAdjusted(point);
+        console.log("textPosition", textPosition);
+        this.renderText(
+          textPosition.x,
+          textPosition.y,
+          `${c},${r}`,
+          styles.text
+        );
       }
     }
   }
