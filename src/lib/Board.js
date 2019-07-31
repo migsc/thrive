@@ -2,15 +2,29 @@ import Hexagon, { styles as hexStyles } from "./Hexagon";
 
 import { isEven, isOdd } from "../utils/math";
 
+const layouts = {
+  "odd-r": {
+    offsetMode: "odd",
+    orientation: "pointy"
+  },
+  "even-r": {
+    offsetMode: "even",
+    orientation: "pointy"
+  },
+  "odd-q": { offsetMode: "odd", orientation: "flat" },
+  "even-q": {
+    offsetMode: "even",
+    orientation: "flat"
+  }
+};
+
 const getOffsetDistance = length => length * 0.5;
 
 const getOffsetDistanceAt = (length, index, offsetMode) => {
-  const n = index + 1;
-
   if (offsetMode === "even") {
-    return isEven(n) ? getOffsetDistance(length) : 0;
+    return isEven(index) ? getOffsetDistance(length) : 0;
   } else if (offsetMode === "odd") {
-    return isOdd(n) ? getOffsetDistance(length) : 0;
+    return isOdd(index) ? getOffsetDistance(length) : 0;
   }
   throw new Error(
     `Offset mode '${offsetMode}' not supported for board. Must be one of [even|odd].`
@@ -27,7 +41,7 @@ const getNextHexCenter = (
   if (orientation === "pointy") {
     return {
       x:
-        x + indexCol * width - getOffsetDistanceAt(width, indexRow, offsetMode),
+        x + indexCol * width + getOffsetDistanceAt(width, indexRow, offsetMode),
       y: y + indexRow * height * (3 / 4)
     };
   } else if (orientation === "flat") {
@@ -35,7 +49,7 @@ const getNextHexCenter = (
       x: x + indexCol * width * (3 / 4),
       y:
         y +
-        indexRow * height -
+        indexRow * height +
         getOffsetDistanceAt(height, indexCol, offsetMode)
     };
   }
@@ -49,8 +63,8 @@ const getOriginFitted = ({ x, y }, hex, orientation) => {
   const stroke = hex.getStrokeWidth();
 
   return {
-    x: x + stroke + (orientation === "pointy" ? hex.width : hex.size),
-    y: y + stroke + (orientation === "flat" ? hex.height : hex.size)
+    x: x + hex.size + stroke,
+    y: y + hex.size + stroke
   };
 };
 
@@ -60,20 +74,21 @@ export default class Board {
     origin = { x: 0, y: 0 },
     rows = 16,
     cols = 16,
-    offsetMode = "even",
-    orientation = "flat",
-    hexagonSize = 50
+    hexagonSize = 50,
+    layout = "odd-r"
   }) {
     this.rows = rows;
     this.cols = cols;
-    this.offsetMode = offsetMode;
-    this.orientation = orientation;
+    this.offsetMode = layouts[layout].offsetMode;
+    this.orientation = layouts[layout].orientation;
+
     this.hex = new Hexagon({
       graphics,
-      orientation,
+      orientation: this.orientation,
       size: hexagonSize
     });
-    this.origin = getOriginFitted(origin, this.hex, orientation);
+
+    this.origin = getOriginFitted(origin, this.hex, this.orientation);
   }
 
   render() {

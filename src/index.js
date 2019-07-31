@@ -20,7 +20,7 @@ const config = {
 };
 
 // eslint-disable-next-line no-unused-vars
-const game = new Phaser.Game(config);
+new Phaser.Game(config);
 
 function preload() {}
 
@@ -36,8 +36,8 @@ function create() {
     },
     rows: 4,
     cols: 4,
-    offsetMode: "even",
-    orientation: "flat",
+    layout: "even-q",
+
     hexagonSize: 50
   });
 

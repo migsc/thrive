@@ -46,7 +46,7 @@ const getHexPoints = (x, y, size, angle) =>
   indicesSix.map(i => getHexCorner(x, y, size, i, angle));
 
 const styles = {
-  lineStyle: [3, 0x000000, 1.0],
+  lineStyle: [5, 0x000000, 1.0],
   fillStyle: [0xdddddd, 0.6]
 };
 
