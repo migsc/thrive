@@ -22,7 +22,7 @@ const config = {
 // eslint-disable-next-line no-unused-vars
 new Phaser.Game(config);
 
-function preload() {}
+function preload() { }
 
 // eslint-disable-next-line max-statements
 function create() {
